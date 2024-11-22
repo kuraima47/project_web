@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "esbuild ./src/index.js --bundle --minify --platform=node --outfile=./dist/app.bundle.min.cjs",
+    "start": "node ./dist/app.bundle.min.cjs",
+    "dev": "nodemon ./src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "mongodb": "^6.1.0",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.5"
+  }
+}
