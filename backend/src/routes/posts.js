@@ -10,7 +10,7 @@ router.post('/', authMiddleware, postController.createPost);
 router.get('/', authMiddleware, postController.getAllPosts);
 
 // Route to get recent tweets
-router.get("/recent", postController.getRecentPosts);
+router.get("/recent",authMiddleware, postController.getRecentPosts);
 
 // Like a post
 router.post('/:postId/like', authMiddleware, postController.likePost);
