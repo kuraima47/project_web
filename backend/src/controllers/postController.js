@@ -1,17 +1,18 @@
 // File: backend/src/controllers/postController.js
 const { Post, User } = require('../models');
-const { format, add } = require('date-fns');
+
+const { fetchAndFormatPosts, createAndFetchPost } = require('../services/postService');
 
 exports.createPost = async (req, res, next) => {
   try {
     const { content } = req.body;
-    const userId = req.user.id; // Extracted from JWT via auth middleware
+    const userId = req.user.id;
 
     if (!content || content.trim() === "") {
       return res.status(400).json({ message: "Content is required" });
     }
 
-    const newPost = await Post.create({ content, authorId: userId });
+    const newPost = await createAndFetchPost({ content, authorId: userId });
     res.status(201).json({ post: newPost });
   } catch (error) {
     next(error);
@@ -20,50 +21,9 @@ exports.createPost = async (req, res, next) => {
 
 exports.getRecentPosts = async (req, res, next) => {
   try {
-    const posts = await Post.findAll({
+    const formattedPosts = await fetchAndFormatPosts({
       order: [['createdAt', 'DESC']],
-      limit: 10,
-      attributes: ['id', 'content', 'createdAt'], // Inclure les attributs nécessaires pour le post
-      include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['username'], // Renvoyer uniquement le nom d'utilisateur
-        },
-        {
-          model: User,
-          as: 'likedBy',
-          attributes: [], // Pas besoin de détails utilisateur pour les likes, on compte simplement
-          through: { attributes: [] },
-        },
-        {
-          model: User,
-          as: 'retweetedBy',
-          attributes: [], // Idem pour les retweets
-          through: { attributes: [] },
-        },
-        {
-          model: Post,
-          as: 'comments',
-          attributes: ['id'], // Compter le nombre de commentaires
-        },
-      ],
-    });
-
-    const formattedPosts = posts.map(post => {
-      const parisTimeZone = 'Europe/Paris';
-      const postCreatedAt = new Date(post.createdAt); 
-      const formattedDate = format(postCreatedAt, 'dd-MM-yyyy HH:mm');
-    
-      return {
-        id: post.id,
-        author: post.author?.username || "Unknown",
-        content: post.content || "",
-        timestamp: formattedDate,
-        likes: Array.isArray(post.likedBy) ? post.likedBy.length : 0,
-        comments: Array.isArray(post.comments) ? post.comments.length : 0,
-        retweets: Array.isArray(post.retweetedBy) ? post.retweetedBy.length : 0,
-      };
+      limit: 30,
     });
 
     res.status(200).json({
@@ -73,6 +33,7 @@ exports.getRecentPosts = async (req, res, next) => {
     next(error);
   }
 };
+
 
 exports.getAllPosts = async (req, res, next) => {
   try {

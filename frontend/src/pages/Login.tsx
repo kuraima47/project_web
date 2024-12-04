@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast(); 
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +23,8 @@ export const Login = () => {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.token);
-        navigate("/");
+        navigate("/", { replace: true });
+        window.location.reload();
       } else {
         toast({
           variant: "destructive",
@@ -47,14 +48,14 @@ export const Login = () => {
             <form onSubmit={handleSubmit}>
               <Input
                 type="email"
-                placeholder="Email"
+                placeholder="E-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mb-4"
               />
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder="Mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mb-4"
@@ -63,6 +64,14 @@ export const Login = () => {
                 Login
               </Button>
             </form>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Pas encore enregistré ?{" "}
+                <Link to="/signup" className="text-blue-500 hover:underline">
+                  Créer un compte
+                </Link>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

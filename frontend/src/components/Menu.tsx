@@ -11,7 +11,7 @@ export const Menu = () => {
   ];
 
   return (
-<nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 md:flex md:flex-col md:h-screen md:w-64 md:border-r md:border-t-0">
+<nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 md:flex md:flex-col md:h-screen md:w-64 md:border-r md:border-t-0 z-50">
   <div className="flex flex-col justify-center h-screen space-y-4">
     {menuItems.map((item) => (
       <Link

@@ -9,6 +9,7 @@ const sequelize = require('./config/database');
 const models = require('./models');
 require('dotenv').config();
 
+const profileRoutes = require('./routes/profile');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const postRoutes = require('./routes/posts');
@@ -47,6 +48,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

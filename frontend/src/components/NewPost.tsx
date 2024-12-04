@@ -26,7 +26,7 @@ export const NewPost = ({ onTweetPosted }) => {
       if (response.ok) {
         const newTweet = await response.json();
         setContent("");
-        onTweetPosted(newTweet.post); // Notify parent component
+        onTweetPosted(newTweet.post);
       } else {
         toast({
           variant: "destructive",

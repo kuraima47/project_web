@@ -20,7 +20,7 @@ export const AppRoutes = () => {
         element={isAuthenticated() ? <Home /> : <Navigate to="/login" replace />}
       />
       <Route
-        path="/profile/:username"
+        path="/profile"
         element={isAuthenticated() ? <Profile /> : <Navigate to="/login" replace />}
       />
       

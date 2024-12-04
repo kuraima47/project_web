@@ -12,6 +12,8 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Si aucun token n'est présent, renvoie une erreur
+    console.log(token);
+
     if (!token) {
       return res.status(401).json({ message: 'Not authorized, no token provided' });
     }
@@ -23,9 +25,12 @@ const authMiddleware = async (req, res, next) => {
     // Vérifie et décode le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET_TW);
 
-    console.log(decoded);
+    console.log("decoded:"+decoded);
 
     // Récupère l'utilisateur correspondant au token
+
+    
+
     const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(401).json({ message: 'User not found, invalid token' });
