@@ -1,0 +1,22 @@
+{
+  "name": "blocktwit-backend",
+  "version": "1.0.0",
+  "description": "Backend for BlockTwit",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "ethers": "^5.4.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.2",
+    "sequelize": "^6.6.5",
+    "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
