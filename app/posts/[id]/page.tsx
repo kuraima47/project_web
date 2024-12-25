@@ -8,9 +8,33 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from '@/contexts/auth-context'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
+interface Comment {
+    id: string
+    content: string
+    user: {
+        username: string
+        avatar: string
+    }
+}
+
+interface Post {
+    id: string
+    content: string
+    createdAt: string
+    likes: number
+    comments: Comment[]
+    reposts: number
+    media?: string
+    author: {
+        username: string
+        avatar: string
+        address: string
+    }
+}
+
 export default function PostDetail() {
     const { id } = useParams()
-    const [post, setPost] = useState(null)
+    const [post, setPost] = useState<Post | null>(null)
     const [comment, setComment] = useState('')
     const { user } = useAuth()
 
@@ -48,8 +72,12 @@ export default function PostDetail() {
                 body: JSON.stringify({ content: comment })
             })
             if (response.ok) {
+                const newComment = await response.json()
+                setPost(prevPost => ({
+                    ...prevPost!,
+                    comments: [newComment, ...prevPost!.comments]
+                }))
                 setComment('')
-                fetchPost()
             } else {
                 throw new Error('Failed to add comment')
             }

@@ -16,29 +16,36 @@ interface Comment {
   }
 }
 
+interface Hashtag {
+  name: string
+}
+
 interface PostCardProps {
   id: string
   content: string
   createdAt: string
   likes: number
-  comments: Comment[]
+  Comments: Comment[]
+  Hashtag : Hashtag[]
   reposts: number
   media?: string
   author: {
+    id : number
     username: string
     avatar: string
     address: string
   }
+  originalPostID?:number
   onUpdate: () => void
 }
 
 export function PostCard({ id, content, createdAt, likes: initialLikes, comments: initialComments, reposts: initialReposts, media, author, onUpdate }: PostCardProps) {
   const [likes, setLikes] = useState(initialLikes)
-  const [commentCount, setCommentCount] = useState(initialComments ? initialComments.length : 0)
+  const [commentCount, setCommentCount] = useState(initialComments?.length || 0)
   const [reposts, setReposts] = useState(initialReposts)
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const relativeTime = formatRelativeTime(new Date(createdAt))
-
+  console.log("comments Count :", commentCount)
   const handleLike = async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/posts/${id}/like`, {
@@ -48,7 +55,8 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, comments
         }
       })
       if (response.ok) {
-        setLikes(prevLikes => prevLikes + 1)
+        const data = await response.json()
+        setLikes(data.likes)
         onUpdate()
       } else {
         throw new Error('Failed to like post')
@@ -92,7 +100,8 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, comments
         }
       })
       if (response.ok) {
-        setReposts(prevReposts => prevReposts + 1)
+        const data = await response.json()
+        setReposts(data.reposts)
         onUpdate()
       } else {
         throw new Error('Failed to repost')

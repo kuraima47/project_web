@@ -28,6 +28,7 @@ export default function Home() {
             })
             if (response.ok) {
                 const data = await response.json()
+                console.log("posts Datas : ", data)
                 setPosts(data)
             } else {
                 throw new Error('Failed to fetch posts')
@@ -35,6 +36,10 @@ export default function Home() {
         } catch (error) {
             console.error('Error fetching posts:', error)
         }
+    }
+
+    const handlePostUpdate = async () => {
+        await fetchPosts()
     }
 
     if (isLoading || !user) {
@@ -50,7 +55,7 @@ export default function Home() {
                     <PostCard
                         key={post.id}
                         {...post}
-                        onUpdate={fetchPosts}
+                        onUpdate={handlePostUpdate}
                     />
                 ))}
             </div>

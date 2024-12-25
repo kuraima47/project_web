@@ -18,6 +18,14 @@ const Post = sequelize.define('Post', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  likes: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  reposts: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   // Pour gérer le repost
   originalPostId: {
     type: DataTypes.INTEGER,
@@ -48,3 +56,4 @@ User.belongsToMany(Post, { through: 'PostLikes', as: 'likedPosts' });
 Post.belongsTo(Post, { as: 'originalPost', foreignKey: 'originalPostId' });
 
 module.exports = Post;
+

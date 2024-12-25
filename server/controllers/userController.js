@@ -25,7 +25,7 @@ exports.authenticate = async (req, res) => {
     }
 
     // Générer un token JWT
-    const secretKey = process.env.JWT_SECRET || 'MySecretKey';
+    const secretKey = process.env.JWT_SECRET || 'jwt_secret_key';
     const token = jwt.sign(
         { id: user.id },
         secretKey,

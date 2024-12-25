@@ -10,7 +10,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'BlockTwit',
+  title: 'BlockTweet',
   description: 'Un réseau social décentralisé inspiré de Twitter, utilisant la blockchain',
 }
 

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "blocktweet": "npm install && npm run _dev",
     "_dev": "concurrently \"node server\" \"next dev\"",
     "dev": "next dev",
     "build": "next build",
