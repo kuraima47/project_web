@@ -28,7 +28,7 @@ export default function Home() {
             })
             if (response.ok) {
                 const data = await response.json()
-                console.log("posts Datas : ", data)
+                console.log("Fetch Data : ", data)
                 setPosts(data)
             } else {
                 throw new Error('Failed to fetch posts')
@@ -36,10 +36,6 @@ export default function Home() {
         } catch (error) {
             console.error('Error fetching posts:', error)
         }
-    }
-
-    const handlePostUpdate = async () => {
-        await fetchPosts()
     }
 
     if (isLoading || !user) {
@@ -54,8 +50,17 @@ export default function Home() {
                 {posts.map((post) => (
                     <PostCard
                         key={post.id}
-                        {...post}
-                        onUpdate={handlePostUpdate}
+                        id={post.id}
+                        content={post.content}
+                        createdAt={post.createdAt}
+                        likes={post.likes}
+                        Comments={post.Comments}
+                        Hashtags={post.Hashtags}
+                        reposts={post.reposts}
+                        media={post.media}
+                        author={post.author}
+                        originalPostId={post.originalPostId}
+                        onUpdate={fetchPosts}
                     />
                 ))}
             </div>

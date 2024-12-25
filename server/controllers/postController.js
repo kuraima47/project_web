@@ -17,6 +17,7 @@ exports.getAllPosts = async (req, res) => {
         },
         {
           model: Comment,
+          as: 'Comments',
           include: [{
             model: User,
             attributes: ['id', 'username', 'avatar']
@@ -24,6 +25,7 @@ exports.getAllPosts = async (req, res) => {
         },
         {
           model: Hashtag,
+          as: 'Hashtags',
           attributes: ['name'],
           through: { attributes: [] }
         }
@@ -43,12 +45,19 @@ exports.getPost = async (req, res) => {
   try {
     const post = await Post.findByPk(id, {
       include: [
-        { model: User, as: 'author', attributes: ['username', 'avatar'] },
+        { model: User, as: 'author', attributes: ['id', 'username', 'avatar', 'address'] },
         {
           model: Comment,
-          include: [{ model: User, attributes: ['username', 'avatar'] }],
+          as: 'Comments',
+          include: [{ model: User, attributes: ['id', 'username', 'avatar'] }],
           order: [['createdAt', 'DESC']]
         },
+        {
+          model: Hashtag,
+          as: 'Hashtags',
+          attributes: ['name'],
+          through: { attributes: [] }
+        }
       ],
     });
 
@@ -195,3 +204,4 @@ exports.createPost = async (req, res) => {
     res.status(500).json({ error: 'Failed to create post' });
   }
 };
+

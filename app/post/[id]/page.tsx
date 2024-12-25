@@ -49,7 +49,6 @@ export default function PostDetail() {
       content: newComment,
       likes: 0
     }
-    console.log("prevData : ", prevData)
     setPostData(prevData => ({
       ...prevData,
       comments: prevData.comments + 1,

@@ -11,10 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 interface Comment {
     id: string
     content: string
-    user: {
+    User: {
         username: string
         avatar: string
     }
+}
+
+interface Hashtag {
+    name: string
 }
 
 interface Post {
@@ -22,14 +26,17 @@ interface Post {
     content: string
     createdAt: string
     likes: number
-    comments: Comment[]
+    Comments: Comment[]
+    Hashtags: Hashtag[]
     reposts: number
     media?: string
     author: {
+        id: number
         username: string
         avatar: string
         address: string
     }
+    originalPostId?: number
 }
 
 export default function PostDetail() {
@@ -75,7 +82,7 @@ export default function PostDetail() {
                 const newComment = await response.json()
                 setPost(prevPost => ({
                     ...prevPost!,
-                    comments: [newComment, ...prevPost!.comments]
+                    Comments: [newComment, ...prevPost!.Comments]
                 }))
                 setComment('')
             } else {
@@ -92,7 +99,19 @@ export default function PostDetail() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <PostCard {...post} onUpdate={fetchPost} />
+            <PostCard
+                id={post.id}
+                content={post.content}
+                createdAt={post.createdAt}
+                likes={post.likes}
+                Comments={post.Comments}
+                Hashtags={post.Hashtags}
+                reposts={post.reposts}
+                media={post.media}
+                author={post.author}
+                originalPostId={post.originalPostId}
+                onUpdate={fetchPost}
+            />
             <form onSubmit={handleComment} className="mt-4">
                 <Input
                     type="text"
@@ -105,14 +124,14 @@ export default function PostDetail() {
             </form>
             <div className="mt-4">
                 <h3 className="text-lg font-semibold mb-2">Comments</h3>
-                {post.comments && post.comments.map((comment) => (
+                {post.Comments && post.Comments.map((comment) => (
                     <div key={comment.id} className="bg-card p-2 rounded mb-2">
                         <div className="flex items-center space-x-2 mb-1">
                             <Avatar className="w-6 h-6">
-                                <AvatarImage src={comment.user.avatar} alt={comment.user.username} />
-                                <AvatarFallback>{comment.user.username[0]}</AvatarFallback>
+                                <AvatarImage src={comment.User.avatar} alt={comment.User.username} />
+                                <AvatarFallback>{comment.User.username[0]}</AvatarFallback>
                             </Avatar>
-                            <p className="font-semibold">{comment.user.username}</p>
+                            <p className="font-semibold">{comment.User.username}</p>
                         </div>
                         <p>{comment.content}</p>
                     </div>

@@ -26,20 +26,20 @@ interface PostCardProps {
   createdAt: string
   likes: number
   Comments: Comment[]
-  Hashtag : Hashtag[]
+  Hashtags: Hashtag[]
   reposts: number
   media?: string
   author: {
-    id : number
+    id: number
     username: string
     avatar: string
     address: string
   }
-  originalPostID?:number
+  originalPostId?: number
   onUpdate: () => void
 }
 
-export function PostCard({ id, content, createdAt, likes: initialLikes, comments: initialComments, reposts: initialReposts, media, author, onUpdate }: PostCardProps) {
+export function PostCard({ id, content, createdAt, likes: initialLikes, Comments: initialComments, Hashtags, reposts: initialReposts, media, author, originalPostId, onUpdate }: PostCardProps) {
   const [likes, setLikes] = useState(initialLikes)
   const [commentCount, setCommentCount] = useState(initialComments?.length || 0)
   const [reposts, setReposts] = useState(initialReposts)
@@ -126,6 +126,13 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, comments
           </CardHeader>
           <CardContent>
             <p>{content}</p>
+            {Hashtags && Hashtags.length > 0 && (
+                <div className="mt-2">
+                  {Hashtags.map((hashtag, index) => (
+                      <span key={index} className="text-blue-500 mr-2">#{hashtag.name}</span>
+                  ))}
+                </div>
+            )}
             {media && (
                 <div className="mt-2">
                   {media.endsWith('.mp4') ? (
