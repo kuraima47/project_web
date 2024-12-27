@@ -7,6 +7,7 @@ import { MessageSquare, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import { io } from "socket.io-client"; // Importez socket.io
 
 export default function Messages() {
   const [conversations, setConversations] = useState([]);
@@ -17,15 +18,21 @@ export default function Messages() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch conversations and pending requests
+    // Connexion au serveur WebSocket
+    const socket = io("http://localhost:3001", {
+      query: { token: localStorage.getItem('token') },
+    });
+    socket.emit("listenMyRooms");
+
+    // Fonction pour récupérer les conversations et demandes en attente
     const fetchData = async () => {
       try {
         setLoading(true);
         const response = await fetch('http://localhost:3001/api/messages', {
           headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
           }
-        })
+        });
         if (!response.ok) throw new Error("Erreur lors du chargement des données");
         const data = await response.json();
 
@@ -37,18 +44,59 @@ export default function Messages() {
         setLoading(false);
       }
     };
+
     fetchData();
+
+    // Écouter les nouveaux messages en temps réel
+    socket.on("receiveMessage", (messageData) => {
+
+
+      console.log(messageData);
+      // Mettez à jour les conversations avec le dernier message
+      setConversations((conversations) => {
+        // Met à jour la conversation concernée
+        const updatedConversations = conversations.map((conversation) => {
+
+          console.log(conversation.conversationId);
+          console.log(messageData.conversationId);
+          if (conversation.conversationId === messageData.conversationId) {
+            return {
+              ...conversation,
+              lastMessage: messageData.content, // Met à jour le dernier message
+              timestamp: new Date(messageData.createdAt), // Met à jour le timestamp du message
+            };
+          }
+          return conversation;
+        });
+
+        // Trie les conversations par date de dernier message, du plus récent au plus ancien
+        updatedConversations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+
+
+        return updatedConversations;
+      });
+    });
+
+    return () => {
+      socket.off("receiveMessage");
+      socket.disconnect();
+    };
+
   }, []);
 
   const handleNewConversation = async () => {
     try {
       const response = await fetch("http://localhost:3001/api/messages", {
         method: "POST",
-        headers: {'Authorization': `Bearer ${localStorage.getItem('token')}`, "Content-Type": "application/json", },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ username: newMessageUser, content: newMessageContent }),
       });
       if (!response.ok) throw new Error("Erreur lors de l'ajout de la conversation");
-      
+
       const user = await response.json();
       if (user.isFollower) {
         setConversations((prev) => [...prev, user]);
@@ -89,9 +137,8 @@ export default function Messages() {
       <h2 className="text-2xl font-semibold mb-6">Messages</h2>
       <div className="space-y-4">
         {conversations.map((conversation) => {
-          // On récupère les deux utilisateurs de la conversation
           const { users, lastMessage, timestamp, conversationId } = conversation;
-          const [user1, user2] = users; // Les utilisateurs sont dans un tableau
+          const [user1, user2] = users; 
 
           return (
             <Link href={`/messages/${conversationId}`} key={conversationId}>

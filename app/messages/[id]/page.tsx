@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Send, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { io } from "socket.io-client";
+
+let socket = io("http://localhost:3001", {
+  query: {
+    token: localStorage.getItem("token"), 
+  }
+});;
 
 export default function Conversation() {
   const params = useParams();
@@ -15,27 +22,46 @@ export default function Conversation() {
   const [messages, setMessages] = useState([]);
   const [friendUser, setFriendUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [conversation, setConversation] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
 
   useEffect(() => {
+    socket = io("http://localhost:3001", {
+      query: {
+        token: localStorage.getItem("token"),
+      }
+    });
     const fetchConversation = async () => {
       try {
-        // Récupérer les détails de la conversation
-        const conversationResponse = await fetch(`http://localhost:3001/api/messages/${params.id}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        const response = await fetch(`http://localhost:3001/api/messages/${params.id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        const conversationData = await conversationResponse.json();
-        setFriendUser(conversationData.friendUser);
-        setCurrentUser(conversationData.currentUser);
-        setMessages(conversationData.conversation.messages);
-        setConversation(conversationData.conversation.id);
+        const data = await response.json();
+
+        setFriendUser(data.friendUser);
+        setCurrentUser(data.currentUser);
+        setMessages(data.conversation.messages);
+        setConversationId(data.conversation.id);
+
+        // Rejoindre la salle WebSocket
+        socket.emit("joinRoom", data.conversation.id);
       } catch (error) {
-        console.error("Error fetching conversation data:", error);
+        console.error("Error fetching conversation:", error);
         router.push("/messages");
       }
     };
 
     fetchConversation();
+
+    // Écouter les messages reçus en temps réel
+    socket.on("receiveMessage", (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    // Cleanup
+    return () => {
+      socket.off("receiveMessage");
+      socket.disconnect();
+    };
   }, [params.id, router]);
 
   const handleSendMessage = async (e) => {
@@ -45,8 +71,17 @@ export default function Conversation() {
         content: newMessage,
       };
 
+      const message = {
+        content: newMessage,
+        senderId: currentUser.id,
+        receiverId: friendUser.id,
+        conversationId,
+        createdAt: new Date(),
+      };
+
       try {
-        // Envoi du message à la conversation avec l'ID dans l'URL
+
+        console.log(newMsg);
         const response = await fetch(`http://localhost:3001/api/messages/${friendUser.id}`, {
           method: "POST",
           headers: { 
@@ -55,11 +90,10 @@ export default function Conversation() {
           },
           body: JSON.stringify(newMsg),
         });
-
+        setNewMessage("");
         if (response.ok) {
+          socket.emit("sendMessage", { roomId: conversationId, message });
           const savedMessage = await response.json();
-          setMessages((prev) => [...prev, savedMessage]);
-          setNewMessage("");
         } else {
           console.error("Error sending message:", response.statusText);
         }
@@ -69,7 +103,7 @@ export default function Conversation() {
     }
   };
 
-  if (!friendUser && !currentUser) return null;
+  if (!friendUser || !currentUser) return null;
 
   return (
     <div className="container mx-auto px-4 py-8 flex flex-col h-[calc(100vh-4rem)]">
@@ -86,20 +120,26 @@ export default function Conversation() {
       </div>
       <ScrollArea className="flex-grow mb-4 p-4 border rounded-lg">
         <div className="space-y-4">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
-              key={message.id}
-              className={`flex ${message.sender.username === currentUser.username ? "justify-end" : "justify-start"}`}
+              key={index}
+              className={`flex ${
+                message.senderId === currentUser.id ? "justify-end" : "justify-start"
+              }`}
             >
               <div
-                className={`max-w-[70%] p-2 rounded-lg ${message.sender.username === currentUser.username
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted"
+                className={`max-w-[70%] p-2 rounded-lg ${
+                  message.senderId === currentUser.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
                 }`}
               >
                 <p>{message.content}</p>
                 <p className="text-xs text-right mt-1">
-                  {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(message.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>
