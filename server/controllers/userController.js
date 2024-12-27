@@ -62,10 +62,15 @@ exports.register = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   const { address } = req.params;
+
+  const addressAsNumber = Number(address);
   try {
     const user = await User.findOne({
-      where: { address: address.toLowerCase() }
+      where: !isNaN(addressAsNumber)  // Vérifie si l'address peut être convertie en nombre
+        ? { id: addressAsNumber }   // Si c'est un nombre, cherche par id
+        : { address: address.toLowerCase() }  // Sinon, cherche par address
     });
+    
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -77,6 +82,7 @@ exports.getProfile = async (req, res) => {
     return res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
+
 
 exports.updateProfile = async (req, res) => {
   const { username, avatar, bio } = req.body;

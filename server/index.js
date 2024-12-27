@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 // Import des modèles pour faire le sync
 const User = require('./models/user');
@@ -40,6 +41,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Sync all models
 sequelize.sync({ alter: true }).then(() => {
