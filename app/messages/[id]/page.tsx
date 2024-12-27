@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,9 @@ import { io } from "socket.io-client";
 
 let socket = io("http://localhost:3001", {
   query: {
-    token: localStorage.getItem("token"), 
+    token: localStorage.getItem("token"),
   }
-});;
+});
 
 export default function Conversation() {
   const params = useParams();
@@ -23,6 +23,8 @@ export default function Conversation() {
   const [friendUser, setFriendUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [conversationId, setConversationId] = useState(null);
+  
+  const scrollAreaRef = useRef(null); // Ref pour la ScrollArea
 
   useEffect(() => {
     socket = io("http://localhost:3001", {
@@ -64,6 +66,15 @@ export default function Conversation() {
     };
   }, [params.id, router]);
 
+  const messagesEndRef = useRef(null)
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+  // Scroll automatique vers le bas lorsque de nouveaux messages sont ajoutés
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages]); // Re-exécuter chaque fois que messages change
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim()) {
@@ -80,16 +91,15 @@ export default function Conversation() {
       };
 
       try {
-
-        console.log(newMsg);
         const response = await fetch(`http://localhost:3001/api/messages/${friendUser.id}`, {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json", 
-            "Authorization": `Bearer ${localStorage.getItem('token')}` 
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`,
           },
           body: JSON.stringify(newMsg),
         });
+
         setNewMessage("");
         if (response.ok) {
           socket.emit("sendMessage", { roomId: conversationId, message });
@@ -142,6 +152,7 @@ export default function Conversation() {
                   })}
                 </p>
               </div>
+              <div ref={messagesEndRef} />
             </div>
           ))}
         </div>

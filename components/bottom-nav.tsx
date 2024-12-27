@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Search, MessageSquare, Bell, User } from 'lucide-react'
+import { Home, Search, MessageSquare, Bell, User, Swords } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { href: '/search', icon: Search, label: 'Recherche' },
   { href: '/messages', icon: MessageSquare, label: 'Messages' },
   { href: '/notifications', icon: Bell, label: 'Notifications' },
+  { href: '/anarchie', icon: Swords, label: 'Anarchie' },
   { href: '/profile', icon: User, label: 'Profil' },
 ]
 

@@ -128,7 +128,6 @@ const messageController = {
       if (!conversation) {
         return res.status(404).json({ message: 'Conversation introuvable.' });
       }
-
       
       console.log(conversation.receiver.id);
       console.log(req.user.id);
@@ -187,7 +186,7 @@ const messageController = {
         timestamp: convo.messages[0] ? convo.messages[0].createdAt : convo.createdAt,
       }));
 
-      return res.status(200).json({ conversations: conversationData });
+      return res.status(200).json({ conversations: conversationData, userId: req.user.id });
 
     } catch (error) {
       console.error('Erreur lors de la récupération des conversations :', error);

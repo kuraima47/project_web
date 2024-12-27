@@ -16,6 +16,7 @@ export default function Messages() {
   const [newMessageContent, setNewMessageContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
     // Connexion au serveur WebSocket
@@ -35,6 +36,7 @@ export default function Messages() {
         });
         if (!response.ok) throw new Error("Erreur lors du chargement des données");
         const data = await response.json();
+        setUserId(data.userId);
 
         setConversations(data.conversations || []);
         // setPendingRequests(data.pendingRequests || []); // Décommente si tu as des demandes en attente
@@ -140,16 +142,18 @@ export default function Messages() {
           const { users, lastMessage, timestamp, conversationId } = conversation;
           const [user1, user2] = users; 
 
+          const userToDisplay = user1.id === userId ? user2 : user1;
+
           return (
             <Link href={`/messages/${conversationId}`} key={conversationId}>
-              <Card className="cursor-pointer hover:bg-accent transition-colors">
+              <Card className="cursor-pointer hover:bg-accent transition-colors mb-4">
                 <CardContent className="p-4 flex items-center space-x-4">
                   <Avatar>
-                    <AvatarImage src={user1.avatar} alt={user1.username} />
-                    <AvatarFallback>{user1.username[0].toUpperCase()}</AvatarFallback>
+                    <AvatarImage src={userToDisplay.avatar} alt={userToDisplay.username} />
+                    <AvatarFallback>{userToDisplay.username.toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h3 className="font-semibold">{user1.username} & {user2.username}</h3>
+                    <h3 className="font-semibold">@{userToDisplay.username}</h3>
                     <p className="text-sm text-muted-foreground">{lastMessage}</p>
                     <p className="text-xs text-muted-foreground">{new Date(timestamp).toLocaleString()}</p>
                   </div>
@@ -171,7 +175,7 @@ export default function Messages() {
                     <AvatarFallback>{request.username[0].toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h3 className="font-semibold">{request.username}</h3>
+                    <h3 className="font-semibold">@{request.username}</h3>
                     <p className="text-sm text-muted-foreground">Souhaite vous envoyer un message</p>
                   </div>
                   <Button onClick={() => handleAcceptRequest(request.id)}>Accepter</Button>
