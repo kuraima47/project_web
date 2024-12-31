@@ -12,6 +12,7 @@ const postRoutes = require('./routes/postRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const cryptoRoutes = require('./routes/cryptoRoutes');
 
 // Import des modèles
 const User = require('./models/user');
@@ -48,6 +49,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
+app.use('/api/cryptos', cryptoRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
