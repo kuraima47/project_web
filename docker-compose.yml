@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .  
+      dockerfile: ./frontend/Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3001
+    networks:
+      - reseau
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
+    container_name: backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - reseau
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - reseau
+
+networks:
+  reseau:
+    driver: bridge

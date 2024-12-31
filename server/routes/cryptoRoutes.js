@@ -1,5 +1,5 @@
 const express = require('express');
-const { getCryptoPrices, getCryptoPricesWithId } = require('../controllers/cryptoController');
+const { getCryptoPrices, getCryptoPricesWithName } = require('../controllers/cryptoController');
 
 const router = express.Router();
 
@@ -7,6 +7,6 @@ const router = express.Router();
 router.get('/', getCryptoPrices);
 
 // Route pour obtenir les prix d'une cryptomonnaie spécifique en fonction de son ID
-router.get('/:id', getCryptoPricesWithId);
+router.get('/:cryptoName', getCryptoPricesWithName);
 
 module.exports = router;
