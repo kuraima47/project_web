@@ -8,6 +8,7 @@ const router = express.Router();
 router.post('/auth', userController.authenticate);
 router.post('/register', userController.register);
 router.get('/profile/:address', authenticate, userController.getProfile);
+router.get('/fromToken/', authenticate, userController.getFromToken);
 router.put('/update', authenticate, userController.updateProfile);
 // -- Follows --
 router.post('/:id/follow', authenticate, userController.followUser);

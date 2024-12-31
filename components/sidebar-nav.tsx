@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Search, MessageSquare, Bell, User, Settings } from 'lucide-react'
+import { Home, Search, MessageSquare, Bell, User, Settings, Swords } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,7 @@ export function SidebarNav() {
     { href: '/search', icon: Search, label: 'Recherche' },
     { href: '/messages', icon: MessageSquare, label: 'Messages' },
     { href: '/notifications', icon: Bell, label: 'Notifications' },
+    { href: '/anarchie', icon: Swords, label: 'Anarchie' },
     { href: user ? `/users/${user.address}` : '/login', icon: User, label: 'Mon Profil' },
     { href: '/settings', icon: Settings, label: 'Paramètres' },
   ]

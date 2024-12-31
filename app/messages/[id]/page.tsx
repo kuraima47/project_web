@@ -1,96 +1,165 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Send, ArrowLeft } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Send, ArrowLeft } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { io } from "socket.io-client";
 
-// Exemple de données pour la démonstration
-const sampleUsers = [
-  { id: '1', username: "alice", avatar: "/placeholder.svg?height=40&width=40" },
-  { id: '2', username: "bob", avatar: "/placeholder.svg?height=40&width=40" },
-  { id: '3', username: "charlie", avatar: "/placeholder.svg?height=40&width=40" },
-  { id: '4', username: "david", avatar: "/placeholder.svg?height=40&width=40" },
-]
-
-const sampleMessages = {
-  '1': [
-    { id: '1', sender: 'alice', content: 'Salut ! Comment ça va ?', timestamp: '10:00' },
-    { id: '2', sender: 'currentUser', content: 'Ça va bien, merci ! Et toi ?', timestamp: '10:05' },
-    { id: '3', sender: 'alice', content: 'Très bien ! Tu as vu les dernières news sur la blockchain ?', timestamp: '10:10' },
-  ],
-  '4': [
-    { id: '1', sender: 'david', content: 'Hey ! Tu es dispo pour un call ?', timestamp: '11:00' },
-    { id: '2', sender: 'currentUser', content: 'Oui, dans 30 minutes ça te va ?', timestamp: '11:15' },
-    { id: '3', sender: 'david', content: 'Parfait, à tout à l\'heure !', timestamp: '11:20' },
-  ],
-}
+let socket = io("http://localhost:3001", {
+  query: {
+    token: localStorage.getItem("token"),
+  }
+});
 
 export default function Conversation() {
-  const params = useParams()
-  const router = useRouter()
-  const [newMessage, setNewMessage] = useState('')
-  const [messages, setMessages] = useState(sampleMessages[params.id as string] || [])
-  const [user, setUser] = useState(sampleUsers.find(u => u.id === params.id))
+  const params = useParams();
+  const router = useRouter();
+  const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [friendUser, setFriendUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
+  
+  const scrollAreaRef = useRef(null); // Ref pour la ScrollArea
 
   useEffect(() => {
-    if (!user) {
-      router.push('/messages')
-    }
-  }, [user, router])
+    socket = io("http://localhost:3001", {
+      query: {
+        token: localStorage.getItem("token"),
+      }
+    });
+    const fetchConversation = async () => {
+      try {
+        const response = await fetch(`http://localhost:3001/api/messages/${params.id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        const data = await response.json();
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
+        setFriendUser(data.friendUser);
+        setCurrentUser(data.currentUser);
+        setMessages(data.conversation.messages);
+        setConversationId(data.conversation.id);
+
+        // Rejoindre la salle WebSocket
+        socket.emit("joinRoom", data.conversation.id);
+      } catch (error) {
+        console.error("Error fetching conversation:", error);
+        router.push("/messages");
+      }
+    };
+
+    fetchConversation();
+
+    // Écouter les messages reçus en temps réel
+    socket.on("receiveMessage", (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    // Cleanup
+    return () => {
+      socket.off("receiveMessage");
+      socket.disconnect();
+    };
+  }, [params.id, router]);
+
+  const messagesEndRef = useRef(null)
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+  // Scroll automatique vers le bas lorsque de nouveaux messages sont ajoutés
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages]); // Re-exécuter chaque fois que messages change
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
     if (newMessage.trim()) {
       const newMsg = {
-        id: Date.now().toString(),
-        sender: 'currentUser',
         content: newMessage,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-      setMessages(prev => [...prev, newMsg])
-      setNewMessage('')
-    }
-  }
+      };
 
-  if (!user) return null
+      const message = {
+        content: newMessage,
+        senderId: currentUser.id,
+        receiverId: friendUser.id,
+        conversationId,
+        createdAt: new Date(),
+      };
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/messages/${friendUser.id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify(newMsg),
+        });
+
+        setNewMessage("");
+        if (response.ok) {
+          socket.emit("sendMessage", { roomId: conversationId, message });
+          const savedMessage = await response.json();
+        } else {
+          console.error("Error sending message:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    }
+  };
+
+  if (!friendUser || !currentUser) return null;
 
   return (
     <div className="container mx-auto px-4 py-8 flex flex-col h-[calc(100vh-4rem)]">
       <div className="flex items-center mb-4">
-        <Button variant="ghost" onClick={() => router.push('/messages')} className="mr-4">
+        <Button variant="ghost" onClick={() => router.push("/messages")} className="mr-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour
         </Button>
         <Avatar className="mr-2">
-          <AvatarImage src={user.avatar} alt={user.username} />
-          <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+          <AvatarImage src={friendUser.avatar} alt={friendUser.username} />
+          <AvatarFallback>{friendUser.username}</AvatarFallback>
         </Avatar>
-        <h2 className="text-2xl font-semibold">Conversation avec {user.username}</h2>
+        <h2 className="text-2xl font-semibold">Conversation avec {friendUser.username}</h2>
       </div>
       <ScrollArea className="flex-grow mb-4 p-4 border rounded-lg">
         <div className="space-y-4">
-          {messages.map((message) => (
-            <div 
-              key={message.id} 
-              className={`flex ${message.sender === 'currentUser' ? 'justify-end' : 'justify-start'}`}
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                message.senderId === currentUser.id ? "justify-end" : "justify-start"
+              }`}
             >
-              <div className={`max-w-[70%] p-2 rounded-lg ${
-                message.sender === 'currentUser' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-              }`}>
+              <div
+                className={`max-w-[70%] p-2 rounded-lg ${
+                  message.senderId === currentUser.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                }`}
+              >
                 <p>{message.content}</p>
-                <p className="text-xs text-right mt-1">{message.timestamp}</p>
+                <p className="text-xs text-right mt-1">
+                  {new Date(message.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
+              <div ref={messagesEndRef} />
             </div>
           ))}
         </div>
       </ScrollArea>
       <form onSubmit={handleSendMessage} className="flex space-x-2">
-        <Input 
-          placeholder="Écrivez votre message..." 
+        <Input
+          placeholder="Écrivez votre message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           className="flex-1"
@@ -100,6 +169,5 @@ export default function Conversation() {
         </Button>
       </form>
     </div>
-  )
+  );
 }
-

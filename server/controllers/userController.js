@@ -60,12 +60,38 @@ exports.register = async (req, res) => {
   }
 };
 
+
+exports.getFromToken = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authorization header missing or invalid' });
+  }
+  // Extraire le token
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Token not found' });
+  }
+  // Vérification du token
+  const secretKey = process.env.JWT_SECRET || 'jwt_secret_key';
+  const decoded = jwt.verify(token, secretKey);
+  if (!decoded || !decoded.id) {
+    return res.status(401).json({ error: 'Invalid token payload' });
+  }
+  const user = await User.findByPk(decoded.id);
+  res.status(200).json(user);
+}
+
 exports.getProfile = async (req, res) => {
   const { address } = req.params;
+
+  const addressAsNumber = Number(address);
   try {
     const user = await User.findOne({
-      where: { address: address.toLowerCase() }
+      where: !isNaN(addressAsNumber)  // Vérifie si l'address peut être convertie en nombre
+        ? { id: addressAsNumber }   // Si c'est un nombre, cherche par id
+        : { address: address.toLowerCase() }  // Sinon, cherche par address
     });
+    
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -77,6 +103,7 @@ exports.getProfile = async (req, res) => {
     return res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
+
 
 exports.updateProfile = async (req, res) => {
   const { username, avatar, bio } = req.body;
