@@ -115,10 +115,12 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
       <Card className="mb-4">
         <Link href={`/posts/${id}`}>
           <CardHeader className="flex flex-row items-center space-x-4 pb-2">
-            <Avatar>
-              <AvatarImage src={author.avatar} alt={author.username} />
-              <AvatarFallback>{author.username[0]}</AvatarFallback>
-            </Avatar>
+            <Link href={`/users/${author.address}`}>
+              <Avatar className="hover:cursor-pointer hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 transition-all duration-500">
+                <AvatarImage src={author.avatar} alt={author.username} />
+                <AvatarFallback>{author.username[0]}</AvatarFallback>
+              </Avatar>
+            </Link>
             <div>
               <p className="font-semibold">{author.username}</p>
               <p className="text-sm text-muted-foreground">{relativeTime}</p>

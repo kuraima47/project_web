@@ -8,6 +8,7 @@ import { Send, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { io } from "socket.io-client";
+import Link from "next/link";
 
 let socket = io("http://localhost:3001", {
   query: {
@@ -122,10 +123,12 @@ export default function Conversation() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour
         </Button>
-        <Avatar className="mr-2">
-          <AvatarImage src={friendUser.avatar} alt={friendUser.username} />
-          <AvatarFallback>{friendUser.username}</AvatarFallback>
-        </Avatar>
+        <Link href={`/users/${friendUser.address}`}>
+          <Avatar className="mr-2 hover:cursor-pointer hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 transition-all duration-500">
+            <AvatarImage src={friendUser.avatar} alt={friendUser.username} />
+            <AvatarFallback>{friendUser.username}</AvatarFallback>
+          </Avatar>
+        </Link>
         <h2 className="text-2xl font-semibold">Conversation avec {friendUser.username}</h2>
       </div>
       <ScrollArea className="flex-grow mb-4 p-4 border rounded-lg">

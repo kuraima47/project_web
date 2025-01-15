@@ -148,10 +148,12 @@ export default function Messages() {
             <Link href={`/messages/${conversationId}`} key={conversationId}>
               <Card className="cursor-pointer hover:bg-accent transition-colors mb-4">
                 <CardContent className="p-4 flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarImage src={userToDisplay.avatar} alt={userToDisplay.username} />
-                    <AvatarFallback>{userToDisplay.username.toUpperCase()}</AvatarFallback>
-                  </Avatar>
+                  <Link href={`/users/${userToDisplay.address}`}>
+                    <Avatar className="mr-2 hover:cursor-pointer hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 transition-all duration-500">
+                      <AvatarImage src={userToDisplay.avatar} alt={userToDisplay.username} />
+                      <AvatarFallback>{userToDisplay.username.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  </Link>
                   <div className="flex-1">
                     <h3 className="font-semibold">@{userToDisplay.username}</h3>
                     <p className="text-sm text-muted-foreground">{lastMessage}</p>

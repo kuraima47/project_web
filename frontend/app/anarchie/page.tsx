@@ -7,6 +7,7 @@ import { Send } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { io } from "socket.io-client";
+import Link from 'next/link'
 
 let socket = io("http://localhost:3001", {
   query: {
@@ -126,10 +127,12 @@ export default function Anarchie() {
             <div key={index} className="flex justify-start w-full">
               <div className="w-full p-2 rounded-lg bg-muted">
                 <div className="flex items-center">
-                  <Avatar className="mr-2">
-                    <AvatarImage src={message.user.avatar} alt={message.user.username} />
-                    <AvatarFallback>{message.user.username}</AvatarFallback>
-                  </Avatar>
+                  <Link href={`/users/${message.user.address}`}>
+                    <Avatar className="mr-2 hover:cursor-pointer hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 transition-all duration-500">
+                          <AvatarImage src={message.user.avatar} alt={message.user.username} />
+                          <AvatarFallback>{message.user.username}</AvatarFallback>
+                      </Avatar>
+                  </Link>
                   <div className="flex flex-col">
                     <p className="font-semibold">{message.user.username}</p>
                     <p>{message.content}</p>

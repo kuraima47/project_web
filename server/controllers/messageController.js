@@ -98,12 +98,12 @@ const messageController = {
           {
             model: User,    
             as: 'sender',     
-            attributes: ['id', 'username', 'avatar'],
+            attributes: ['id', 'username', 'avatar', 'address'],
           },
           {
             model: User,         
             as: 'receiver',       
-            attributes: ['id', 'username', 'avatar'], 
+            attributes: ['id', 'username', 'avatar', 'address'], 
           },
           {
             model: Message,      
@@ -159,12 +159,12 @@ const messageController = {
           {
             model: User,
             as: 'sender',
-            attributes: ['id', 'username', 'avatar'],
+            attributes: ['id', 'username', 'avatar', 'address'],
           },
           {
             model: User,
             as: 'receiver',
-            attributes: ['id', 'username', 'avatar'],
+            attributes: ['id', 'username', 'avatar', 'address'],
           },
           {
             model: Message,
@@ -179,8 +179,8 @@ const messageController = {
       const conversationData = conversations.map(convo => ({
         conversationId: convo.id,
         users: [
-          { id: convo.sender.id, username: convo.sender.username, avatar: convo.sender.avatar },
-          { id: convo.receiver.id, username: convo.receiver.username, avatar: convo.receiver.avatar }
+          { id: convo.sender.id, username: convo.sender.username, avatar: convo.sender.avatar, address: convo.sender.address},
+          { id: convo.receiver.id, username: convo.receiver.username, avatar: convo.receiver.avatar, address: convo.receiver.address }
         ],
         lastMessage: convo.messages[0] ? convo.messages[0].content : 'Aucun message',
         timestamp: convo.messages[0] ? convo.messages[0].createdAt : convo.createdAt,
