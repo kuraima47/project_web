@@ -11,8 +11,9 @@ router.get('/profile/:address', authenticate, userController.getProfile);
 router.get('/fromToken/', authenticate, userController.getFromToken);
 router.put('/update', authenticate, userController.updateProfile);
 // -- Follows --
-router.post('/:id/follow', authenticate, userController.followUser);
-router.delete('/:id/unfollow', authenticate, userController.unfollowUser);
-router.get('/:id/followers', authenticate, userController.getFollowers);
-router.get('/:id/following', authenticate, userController.getFollowing);
+router.post('/:address/follow', authenticate, userController.followUser);
+router.delete('/:address/unfollow', authenticate, userController.unfollowUser);
+router.get('/:address/dofollow',authenticate, userController.doFollow);
+router.get('/:address/followers', authenticate, userController.getFollowers);
+router.get('/:address/following', authenticate, userController.getFollowing);
 module.exports = router;

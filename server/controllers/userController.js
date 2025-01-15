@@ -2,6 +2,7 @@
 
 const { ethers } = require('ethers');
 const User = require('../models/user');
+const Notification = require('../models/notification');
 const jwt = require('jsonwebtoken');
 
 exports.authenticate = async (req, res) => {
@@ -83,13 +84,9 @@ exports.getFromToken = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   const { address } = req.params;
-
-  const addressAsNumber = Number(address);
   try {
     const user = await User.findOne({
-      where: !isNaN(addressAsNumber)  // Vérifie si l'address peut être convertie en nombre
-        ? { id: addressAsNumber }   // Si c'est un nombre, cherche par id
-        : { address: address.toLowerCase() }  // Sinon, cherche par address
+      where: { address: address.toLowerCase() }
     });
     
 
@@ -141,15 +138,17 @@ exports.updateProfile = async (req, res) => {
 exports.followUser = async (req, res) => {
   try {
     // ID de l'utilisateur qu'on veut suivre
-    const userIdToFollow = parseInt(req.params.id, 10);
+    const addressToFollow = req.params.address;
 
     // Vérification si c’est pas soi-même
-    if (userIdToFollow === req.user.id) {
+    if (addressToFollow === req.user.address) {
       return res.status(400).json({ error: 'Cannot follow yourself' });
     }
 
     // Vérifier que l'utilisateur à suivre existe
-    const userToFollow = await User.findByPk(userIdToFollow);
+    const userToFollow = await User.findOne({
+      where: { address: addressToFollow },
+    });;
     if (!userToFollow) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -177,20 +176,29 @@ exports.followUser = async (req, res) => {
  */
 exports.unfollowUser = async (req, res) => {
   try {
-    const userIdToUnfollow = parseInt(req.params.id, 10);
+    const addressToUnfollow = req.params.address;
 
-    if (userIdToUnfollow === req.user.id) {
+
+    if (addressToUnfollow === req.user.address) {
       return res.status(400).json({ error: 'Cannot unfollow yourself' });
     }
 
     // Vérifier que l'utilisateur existe
-    const userToUnfollow = await User.findByPk(userIdToUnfollow);
+    const userToUnfollow = await User.findOne({
+      where: { address: addressToUnfollow },
+    });;
     if (!userToUnfollow) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Retirer la relation
     await req.user.removeFollowing(userToUnfollow);
+
+    await Notification.create({
+      type: 'unfollow',
+      userId: userToUnfollow.id,   // la personne qui est suivie
+      actorId: req.user.id,      // celui qui suit
+    });
 
     return res.json({ message: 'Unfollowed successfully' });
   } catch (error) {
@@ -205,10 +213,11 @@ exports.unfollowUser = async (req, res) => {
  */
 exports.getFollowers = async (req, res) => {
   try {
-    const userId = parseInt(req.params.id, 10);
+    const userAddress = req.params.address;
 
-    // Vérifier que l'utilisateur existe
-    const user = await User.findByPk(userId);
+    const user = await User.findOne({
+      where: { address: userAddress },
+    });;
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -230,10 +239,10 @@ exports.getFollowers = async (req, res) => {
  */
 exports.getFollowing = async (req, res) => {
   try {
-    const userId = parseInt(req.params.id, 10);
-
-    // Vérifier que l'utilisateur existe
-    const user = await User.findByPk(userId);
+    const userAddress = req.params.address;
+    const user = await User.findOne({
+      where: { address: userAddress },
+    });;
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -247,4 +256,8 @@ exports.getFollowing = async (req, res) => {
     console.error('Error fetching following:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
+};
+
+exports.doFollow = async (req, res) => {
+
 };

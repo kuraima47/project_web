@@ -40,6 +40,49 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
+exports.getUserPosts = async (req, res) => {
+  const { address } = req.params;  // L'adresse de l'utilisateur est récupérée à partir des paramètres de l'URL
+
+  try {
+    // On cherche les posts de l'utilisateur spécifié par son adresse
+    const posts = await Post.findAll({
+      where: {
+        '$author.address$': address  // Filtrer les posts en fonction de l'adresse de l'utilisateur
+      },
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'username', 'avatar', 'address']
+        },
+        {
+          model: Comment,
+          as: 'Comments',
+          include: [
+            {
+              model: User,
+              attributes: ['id', 'username', 'avatar']
+            }
+          ]
+        },
+        {
+          model: Hashtag,
+          as: 'Hashtags',
+          attributes: ['name'],
+          through: { attributes: [] }  // Ne pas inclure les attributs de la table de jointure
+        }
+      ],
+      order: [['createdAt', 'DESC']]  // Trier par date de création du post (les plus récents en premier)
+    });
+
+    // Retourner les posts trouvés
+    res.json(posts);
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+    res.status(500).json({ error: 'Failed to fetch user posts' });
+  }
+};
+
 exports.getPost = async (req, res) => {
   const { id } = req.params;
   try {

@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Heart, MessageCircle, Repeat2 } from 'lucide-react'
+import { Bell, Heart, MessageCircle, Repeat2, UserPlus, UserMinus } from 'lucide-react'
 import Link from 'next/link'
 
 interface Notification {
     id: string
-    type: 'like' | 'comment' | 'repost'
+    type: 'like' | 'comment' | 'repost' | 'follow' | 'unfollow'
     actor: {
         username: string
         avatar: string
@@ -16,7 +16,10 @@ interface Notification {
     post: {
         id: string
         content: string
-    }
+    } | null // Le post peut être null dans le cas d'un follow
+    comment: {
+        content: string
+    } | null // Le commentaire peut être null dans le cas d'un follow
     createdAt: string
     read: boolean
 }
@@ -74,6 +77,10 @@ export default function Notifications() {
                 return <MessageCircle className="h-4 w-4 text-blue-500" />
             case 'repost':
                 return <Repeat2 className="h-4 w-4 text-green-500" />
+            case 'follow':
+                return <UserPlus className="h-4 w-4 text-teal-500" />
+            case 'unfollow':
+                return <UserMinus className="h-4 w-4 text-teal-500" /> 
             default:
                 return <Bell className="h-4 w-4" />
         }
@@ -87,6 +94,10 @@ export default function Notifications() {
                 return `a commenté votre post`
             case 'repost':
                 return `a reposté votre post`
+            case 'follow':
+                return `vous a suivi`
+            case 'unfollow':
+                return `vous a supprimé`
             default:
                 return `a interagi avec votre post`
         }
@@ -112,7 +123,12 @@ export default function Notifications() {
                                     <span className="font-semibold">{notification.actor.username}</span>{' '}
                                     {getNotificationText(notification)}
                                 </p>
-                                <p className="text-sm text-muted-foreground truncate">{notification.post.content}</p>
+                                {notification.type !== 'follow' && notification.post && (
+                                    <p className="text-sm text-muted-foreground truncate">{notification.post.content}</p>
+                                )}
+                                {notification.type === 'comment' && notification.comment && (
+                                    <p className="text-sm text-muted-foreground truncate">{notification.comment.content}</p>
+                                )}
                                 <p className="text-xs text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</p>
                             </div>
                             {getNotificationIcon(notification.type)}
@@ -123,4 +139,3 @@ export default function Notifications() {
         </div>
     )
 }
-
