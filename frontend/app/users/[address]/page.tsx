@@ -15,15 +15,20 @@ export default function UserProfile() {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false); // Nouvel état pour suivre si l'utilisateur suit ou non
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [isFollowersOpen, setIsFollowersOpen] = useState(false);
+  const [isFollowingOpen, setIsFollowingOpen] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
     fetchUserPosts();
-    checkIfFollowing(); // Vérifier si l'utilisateur suit ce profil
+    checkIfFollowing();
+    fetchFollowers();
+    fetchFollowing();
   }, [address]);
 
-  // Récupérer les informations du profil de l'utilisateur
   const fetchUserProfile = async () => {
     try {
       const response = await fetch(
@@ -45,7 +50,48 @@ export default function UserProfile() {
     }
   };
 
-  // Récupérer les posts de l'utilisateur
+  const fetchFollowers = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/users/${address}/followers`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setFollowers(data);
+      } else {
+        throw new Error("Failed to fetch followers");
+      }
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/users/${address}/following`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setFollowing(data);
+      } else {
+        throw new Error("Failed to fetch following");
+      }
+    } catch (error) {
+      console.error("Error fetching following:", error);
+    }
+  };
+
   const fetchUserPosts = async () => {
     try {
       const response = await fetch(
@@ -67,13 +113,12 @@ export default function UserProfile() {
     }
   };
 
-  // Vérifier si l'utilisateur connecté suit cet utilisateur
   const checkIfFollowing = async () => {
     if (!currentUser) return;
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${address}/following/`,
+        `http://localhost:3001/api/users/${address}/doFollow/`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -83,9 +128,7 @@ export default function UserProfile() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
-        setIsFollowing(data.isFollowing); // Met à jour l'état de l'abonnement
-        
+        setIsFollowing(data.isFollowing);
       } else {
         throw new Error("Failed to check follow status");
       }
@@ -94,7 +137,6 @@ export default function UserProfile() {
     }
   };
 
-  // Fonction pour s'abonner
   const followUser = async () => {
     try {
       const response = await fetch(
@@ -107,7 +149,8 @@ export default function UserProfile() {
         }
       );
       if (response.ok) {
-        setIsFollowing(true); // Utilisateur désormais abonné
+        setIsFollowing(true);
+        fetchFollowers();
       } else {
         throw new Error("Failed to follow user");
       }
@@ -116,7 +159,6 @@ export default function UserProfile() {
     }
   };
 
-  // Fonction pour se désabonner
   const unfollowUser = async () => {
     try {
       const response = await fetch(
@@ -129,13 +171,19 @@ export default function UserProfile() {
         }
       );
       if (response.ok) {
-        setIsFollowing(false); // Utilisateur ne suit plus
+        setIsFollowing(false);
+        fetchFollowers();
       } else {
         throw new Error("Failed to unfollow user");
       }
     } catch (error) {
       console.error("Error unfollowing user:", error);
     }
+  };
+
+  const closePopup = () => {
+    setIsFollowersOpen(false);
+    setIsFollowingOpen(false);
   };
 
   if (!user) {
@@ -152,28 +200,28 @@ export default function UserProfile() {
         <CardHeader>
           <div className="flex items-center space-x-4">
             <Avatar className="w-24 h-24">
-              <AvatarImage
-                src={user.avatar}
-                alt={user.username || user.address}
-              />
+              <AvatarImage src={user.avatar} alt={user.username || user.address} />
               <AvatarFallback>
-                {user.username
-                  ? user.username[0].toUpperCase()
-                  : user.address.slice(0, 2)}
+                {user.username ? user.username[0].toUpperCase() : user.address.slice(0, 2)}
               </AvatarFallback>
             </Avatar>
             <div>
               <CardTitle className="text-2xl font-bold">
-                {user.username ||
-                  `${user.address.slice(0, 6)}...${user.address.slice(-4)}`}
+                {user.username || `${user.address.slice(0, 6)}...${user.address.slice(-4)}`}
               </CardTitle>
-              <p className="text-muted-foreground">{user.bio || "No bio available"}</p>
+              <p className="text-muted-foreground">{user.bio || "Cet utilisateur n'a pas de bio."}</p>
               <div className="flex space-x-4 mt-2 text-sm">
-                <button className="text-primary hover:underline">
-                  {user.followers || 0} abonnés
+                <button
+                  className="text-primary hover:underline"
+                  onClick={() => setIsFollowersOpen(true)}
+                >
+                  {followers.length || 0} abonnés
                 </button>
-                <button className="text-primary hover:underline">
-                  {user.following || 0} abonnements
+                <button
+                  className="text-primary hover:underline"
+                  onClick={() => setIsFollowingOpen(true)}
+                >
+                  {following.length || 0} abonnements
                 </button>
               </div>
             </div>
@@ -199,9 +247,7 @@ export default function UserProfile() {
         {posts.length === 0 ? (
           <div>Aucun post trouvé.</div>
         ) : (
-          posts.map((post) => (
-            <PostCard key={post.id} {...post} onUpdate={fetchUserPosts} />
-          ))
+          posts.map((post) => <PostCard key={post.id} {...post} onUpdate={fetchUserPosts} />)
         )}
       </div>
 
@@ -218,6 +264,53 @@ export default function UserProfile() {
           currentBio={user.bio || ""}
         />
       )}
+
+      {/* Popup for followers */}
+      {isFollowersOpen && (
+        <Popup title="Abonnés" users={followers} onClose={closePopup} />
+      )}
+
+      {/* Popup for following */}
+      {isFollowingOpen && (
+        <Popup title="Abonnements" users={following} onClose={closePopup} />
+      )}
+    </div>
+  );
+}
+
+function Popup({ title, users, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-4 rounded-lg max-w-sm w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold">{title}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <span className="font-bold">×</span>
+          </button>
+        </div>
+        <div>
+          {users.length === 0 ? (
+            <p className="text-center text-muted-foreground">Aucun utilisateur trouvé.</p>
+          ) : (
+            <ul className="space-y-2">
+              {users.map((user) => (
+                <li key={user.id} className="flex items-center space-x-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user.avatar} alt={user.username || user.address} />
+                    <AvatarFallback>
+                      {user.username ? user.username[0].toUpperCase() : user.address.slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">{user.username}</p>
+                    <p className="text-sm text-muted-foreground">{user.username || user.address}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
