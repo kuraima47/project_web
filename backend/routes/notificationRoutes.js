@@ -6,6 +6,8 @@ const { authenticate } = require('../middlewares/auth');
 const router = express.Router();
 
 router.get('/', authenticate, notificationController.getNotifications);
-router.put('/:id/read', authenticate, notificationController.markNotificationAsRead);
+router.get('/unread', authenticate, notificationController.getUnreadNotifications);
+router.put('/read/:id', authenticate, notificationController.markNotificationAsRead);
+router.put('/all/read', authenticate, notificationController.markAllNotificationsAsRead);
 
 module.exports = router;

@@ -22,6 +22,48 @@ exports.getNotifications = async (req, res) => {
     }
 };
 
+exports.getUnreadNotifications = async (req, res) => {
+    console.log("unread!");
+    try {
+        const notifications = await Notification.findAll({
+            where: { userId: req.user.id, read: false },
+            include: [
+                { model: User, as: 'actor', attributes: ['username', 'avatar'] },
+                { model: Post, as: 'post', attributes: ['id', 'content'] },
+            ],
+            order: [['createdAt', 'DESC']],
+        });
+
+        res.json(notifications);
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+};
+
+
+exports.markAllNotificationsAsRead = async (req, res) => {
+    try {
+        const notifications = await Notification.findAll({
+            where: { userId: req.user.id },
+        });
+
+        if (!notifications || notifications.length == 0) {
+            return res.status(404).json({ error: 'No notification found' });
+        }
+        
+        notifications.forEach(async n => {
+            n.read = true
+            await n.save();   
+        });
+
+        res.json({ message: 'Notification marked as read' });
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+        res.status(500).json({ error: 'Failed to mark notification as read' });
+    }
+};
+
 exports.markNotificationAsRead = async (req, res) => {
     const { id } = req.params;
     try {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { CustomToast } from "@/components/ui/customToast";
 
 type NotificationContextType = {
@@ -27,7 +27,30 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     message: string;
     hrefValue: string;
   } | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+
+
+  const fetchUnreadNotifications = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/api/notifications/unread", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+  
+      if (!response.ok){
+        throw new Error("Erreur lors du chargement des notifications");
+      }
+      const data = await response.json();
+      setUnreadCount(data.length);
+    } catch (err: any) {
+      console.log(err);
+    }
+  }
+
+  const [unreadCount, setUnreadCount] = useState(fetchUnreadNotifications());
+  useEffect(() => {
+    fetchUnreadNotifications();
+  })
 
   const notify = (
     type: "follow" | "unfollow" | "like" | "repost" | "comment" | "message",
