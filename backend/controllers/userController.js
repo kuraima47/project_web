@@ -5,6 +5,7 @@ const User = require('../models/user');
 const Notification = require('../models/notification');
 const UserFollows = require('../models/userFollow');
 const jwt = require('jsonwebtoken');
+const { createNotification } = require('../services/notificationService');
 
 exports.authenticate = async (req, res) => {
   const { address, signature, message } = req.body;

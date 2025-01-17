@@ -82,8 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const data = await response.json()
                 setUser(data.user)
                 localStorage.setItem('token', data.token)
-
-                console.log('Connexion réussie avec l\'adresse:', address)
+               console.log('Connexion réussie avec l\'adresse:', address)
             } catch (error) {
                 console.error('Erreur lors de la connexion:', error)
                 throw error
@@ -116,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const errorData = await response.json()
                 throw new Error(errorData.error || 'Registration failed')
             }
-
+        
             const updatedUser = await response.json()
             setUser(updatedUser.user)
         } catch (error) {

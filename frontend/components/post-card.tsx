@@ -127,7 +127,7 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
             </div>
           </CardHeader>
           <CardContent>
-            <p>{content}</p>
+            <p className="break-words">{content}</p>
             {Hashtags && Hashtags.length > 0 && (
                 <div className="mt-2">
                   {Hashtags.map((hashtag, index) => (
