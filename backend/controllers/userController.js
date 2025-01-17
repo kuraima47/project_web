@@ -3,6 +3,7 @@
 const { ethers } = require('ethers');
 const User = require('../models/user');
 const Notification = require('../models/notification');
+const UserFollows = require('../models/userFollow');
 const jwt = require('jsonwebtoken');
 
 exports.authenticate = async (req, res) => {
@@ -234,24 +235,32 @@ exports.getFollowers = async (req, res) => {
 };
 
 /**
- * @route GET /api/users/:id/following
- * Récupère la liste des utilisateurs suivis par l'utilisateur :id
+ * @route GET /api/users/:address/following
+ * Récupère la liste des utilisateurs suivis par l'utilisateur :adress
  */
 exports.getFollowing = async (req, res) => {
   try {
     const userAddress = req.params.address;
     const user = await User.findOne({
       where: { address: userAddress },
-    });;
+    });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Récupérer ceux qu'il suit
-    // "following" => as défini dans le modèle
-    const following = await user.getFollowing();
+    // Récupérer les relations de suivi dans UserFollows
+    const followingRelations = await UserFollows.findAll({
+        where: { followerId: user.id },
+        attributes: ['followingId'],
+    });
 
-    return res.json(following);
+    // Extraire les IDs et rechercher les utilisateurs correspondants
+    const followingIds = followingRelations.map(relation => relation.followingId);
+    const followingUsers = await User.findAll({
+        where: { id: followingIds },
+    });
+
+    return res.json(followingUsers);
   } catch (error) {
     console.error('Error fetching following:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -259,5 +268,22 @@ exports.getFollowing = async (req, res) => {
 };
 
 exports.doFollow = async (req, res) => {
+  try {
+    const launcherUser = req.user;
+    const followerToFind = req.params.address;   // Adresse de l'utilisateur à vérifier
 
+    if (!launcherUser) {
+      return res.status(404).json({ error: 'Launcher user not found' });
+    }
+
+    const following = await launcherUser.getFollowing();
+
+    // Vérifier si le followerToFind est dans la liste des utilisateurs suivis
+    const isFollowing = following.some(user => user.address === followerToFind);
+
+    return res.json({ isFollowing });
+  } catch (error) {
+    console.error('Error fetching following:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  } 
 };
