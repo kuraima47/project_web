@@ -21,28 +21,46 @@ function verifyToken(socket, token) {
   }
 }
 
+const userSocketMap = new Map();
 // Exporter la logique pour gérer les notifications
 module.exports = (io) => {
   io.on('connection', (socket) => {
-    console.log('Un utilisateur est connecté pour les notifications :', socket.id);
-
     const token = socket.handshake.query.token;
     const decoded = verifyToken(socket, token);
-    if (!decoded) return;
+    if (!decoded) {
+      console.log("déconnecté, mauvais token");
+      socket.disconnect();
+      return;
+    }
 
-    // Écouter les événements de notification envoyés par le serveur
-    socket.on('sendNotification', (notificationData) => {
-      const { type, message } = notificationData;
-
-      console.log(`Envoi de notification à ${socket.userId} : Type: ${type}, Message: ${message}`);
-
-      // Émettre la notification en temps réel pour l'utilisateur
-      io.to(socket.userId).emit('receiveNotification', { type, message });
-    });
+    const socketId = socket.id;
+    const userId = decoded.id;
+    console.log('Un utilisateur est connecté pour les notifications :', socketId);
+    addUserToSocketMap(userId, socketId);
 
     // Déconnexion de l'utilisateur
     socket.on('disconnect', () => {
-      console.log('Un utilisateur s\'est déconnecté des notifications :', socket.id);
+      console.log('Un utilisateur s\'est déconnecté des notifications :', socketId);
+      removeUserFromSocketMap(userId);
     });
   });
 };
+
+
+function addUserToSocketMap(userId, socketId) {
+  userSocketMap.set(userId, socketId);
+  console.log(`Ajouté à la table de hachage : ${userId} -> ${socketId}`);
+}
+
+// Fonction pour supprimer l'association user.id -> socket.id
+function removeUserFromSocketMap(userId) {
+  userSocketMap.delete(userId);
+  console.log(`Supprimé de la table de hachage : ${userId}`);
+}
+
+function getSocketIdFromUserId(userId) {
+  return userSocketMap.get(userId);
+}
+
+module.exports.getSocketIdFromUserId = getSocketIdFromUserId;
+
