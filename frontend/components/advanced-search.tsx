@@ -11,6 +11,7 @@ import Link from 'next/link'
 interface SearchResult {
   type: 'user' | 'post' | 'hashtag'
   id?: string
+  address?:string
   username?: string
   avatar?: string
   bio?: string
@@ -75,7 +76,7 @@ export function AdvancedSearch() {
               <Card key={index}>
                 <CardContent className="p-4">
                   {result.type === 'user' && (
-                      <Link href={`/users/${result.id}`} className="flex items-center space-x-4">
+                      <Link href={`/users/${result.address}`} className="flex items-center space-x-4">
                         <Avatar>
                           <AvatarImage src={result.avatar} alt={result.username} />
                           <AvatarFallback>{result.username?.[0].toUpperCase()}</AvatarFallback>
