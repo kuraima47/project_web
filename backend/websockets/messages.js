@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Conversation = require('./models/conversation');
+const Conversation = require('../models/conversation');
 const { Op } = require('sequelize');
 const secretKey = process.env.JWT_SECRET || 'jwt_secret_key';
 

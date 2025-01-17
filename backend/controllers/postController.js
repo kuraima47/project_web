@@ -3,8 +3,8 @@
 const Post = require('../models/post');
 const User = require('../models/user');
 const Comment = require('../models/comment');
-const Notification = require('../models/notification');
 const Hashtag = require('../models/hashtag');
+const { createNotification } = require('../services/notificationService');
 
 exports.getAllPosts = async (req, res) => {
   try {
@@ -127,13 +127,7 @@ exports.likePost = async (req, res) => {
     post.likes += 1;
     await post.save();
 
-    // Créer une notification
-    await Notification.create({
-      type: 'like',
-      userId: post.authorId,
-      actorId: req.user.id,
-      postId: post.id,
-    });
+    await createNotification('like',post.authorId,req.user.id,post.id);
 
     res.json({ message: 'Post liked successfully', likes: post.likes });
   } catch (error) {
@@ -161,14 +155,8 @@ exports.commentPost = async (req, res) => {
       include: [{ model: User, attributes: ['id', 'username', 'avatar'] }]
     });
 
-    // Créer une notification
-    await Notification.create({
-      type: 'comment',
-      userId: post.authorId,
-      actorId: req.user.id,
-      postId: post.id,
-      commentId: comment.id,
-    });
+
+    await createNotification('comment',post.authorId, req.user.id,post.id,comment.id);
 
     res.status(201).json(commentWithUser);
   } catch (error) {
@@ -195,13 +183,7 @@ exports.repostPost = async (req, res) => {
     originalPost.reposts += 1;
     await originalPost.save();
 
-    // Notification
-    await Notification.create({
-      type: 'repost',
-      userId: originalPost.authorId,
-      actorId: req.user.id,
-      postId: originalPost.id,
-    });
+    await createNotification('repost',originalPost.authorId,req.user.id,originalPost.id);
 
     res.status(201).json({ repost, reposts: originalPost.reposts });
   } catch (error) {

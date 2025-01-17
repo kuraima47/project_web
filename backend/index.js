@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const http = require('http'); // Pour créer un serveur HTTP
 const { Server } = require('socket.io'); // Importer Socket.IO
 const path = require('path');
 const sequelize = require('./config/database');
@@ -26,17 +25,13 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 
+// Sockets
+const { initSockets, getIoMessages, getIoNotifications } = require('./socket');
+const {server, notificationServer} = initSockets(app);
 
-// Serveur HTTP pour Socket.IO
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-});
-require('./websocket.js')(io);
+require('./websockets/messages.js')(getIoMessages()); // WebSocket pour les messages privés
+require('./websockets/notifications.js')(getIoNotifications());
+
 
 // Configuration CORS
 app.use(cors({
@@ -61,5 +56,8 @@ sequelize.sync({ alter: true }).then(() => {
   console.log('Database synced');
   server.listen(port, () => {
     console.log(`Server running on port ${port}`);
+  });
+  notificationServer.listen(port+1, () => {
+    console.log(`Notification WebSocket server running on port 3002`);
   });
 });
