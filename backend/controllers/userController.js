@@ -157,12 +157,7 @@ exports.followUser = async (req, res) => {
     // Ajouter la relation
     await req.user.addFollowing(userToFollow);
 
-    // Créer une notification (optionnel)
-    await Notification.create({
-      type: 'follow',
-      userId: userToFollow.id,   // la personne qui est suivie
-      actorId: req.user.id,      // celui qui suit
-    });
+    await createNotification('follow',userToFollow.id,req.user.id);
 
     return res.json({ message: 'Followed successfully' });
   } catch (error) {
@@ -195,11 +190,7 @@ exports.unfollowUser = async (req, res) => {
     // Retirer la relation
     await req.user.removeFollowing(userToUnfollow);
 
-    await Notification.create({
-      type: 'unfollow',
-      userId: userToUnfollow.id,   // la personne qui est suivie
-      actorId: req.user.id,      // celui qui suit
-    });
+    await createNotification('unfollow',userToUnfollow.id,req.user.id);
 
     return res.json({ message: 'Unfollowed successfully' });
   } catch (error) {
