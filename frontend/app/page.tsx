@@ -54,7 +54,7 @@ export default function Home() {
                         content={post.content}
                         createdAt={post.createdAt}
                         likes={post.likes}
-                        Comments={post.Comments}
+                        Comments={post.responses}
                         Hashtags={post.Hashtags}
                         reposts={post.reposts}
                         media={post.media}

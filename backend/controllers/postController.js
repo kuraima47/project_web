@@ -2,35 +2,32 @@
 
 const Post = require('../models/post');
 const User = require('../models/user');
-const Comment = require('../models/comment');
 const Hashtag = require('../models/hashtag');
 const { createNotification } = require('../services/notificationService');
 
 exports.getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
+      where: { parentPostId: null }, // Ne récupérer que les posts racines
       include: [
         {
           model: User,
           as: 'author',
-          attributes: ['id', 'username', 'avatar', 'address']
+          attributes: ['id', 'username', 'avatar', 'address'],
         },
         {
-          model: Comment,
-          as: 'Comments',
-          include: [{
-            model: User,
-            attributes: ['id', 'username', 'avatar']
-          }]
+          model: Post,
+          as: 'responses',
+          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
         },
         {
           model: Hashtag,
           as: 'Hashtags',
           attributes: ['name'],
-          through: { attributes: [] }
-        }
+          through: { attributes: [] },
+        },
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
     });
 
     res.json(posts);
@@ -40,67 +37,53 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
-exports.getUserPosts = async (req, res) => {
-  const { address } = req.params;  // L'adresse de l'utilisateur est récupérée à partir des paramètres de l'URL
 
+exports.getUserPosts = async (req, res) => {
+  const { address } = req.params;
   try {
-    // On cherche les posts de l'utilisateur spécifié par son adresse
     const posts = await Post.findAll({
-      where: {
-        '$author.address$': address  // Filtrer les posts en fonction de l'adresse de l'utilisateur
-      },
+      where: { '$author.address$': address, parentPostId: null }, // Ne récupérer que les posts racines
       include: [
         {
           model: User,
           as: 'author',
-          attributes: ['id', 'username', 'avatar', 'address']
+          attributes: ['id', 'username', 'avatar', 'address'],
         },
         {
-          model: Comment,
-          as: 'Comments',
-          include: [
-            {
-              model: User,
-              attributes: ['id', 'username', 'avatar']
-            }
-          ]
+          model: Post,
+          as: 'responses',
+          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
         },
         {
           model: Hashtag,
           as: 'Hashtags',
           attributes: ['name'],
-          through: { attributes: [] }  // Ne pas inclure les attributs de la table de jointure
-        }
+          through: { attributes: [] },
+        },
       ],
-      order: [['createdAt', 'DESC']]  // Trier par date de création du post (les plus récents en premier)
+      order: [['createdAt', 'DESC']],
     });
 
-    // Retourner les posts trouvés
     res.json(posts);
   } catch (error) {
-    console.error('Error fetching user posts:', error);
-    res.status(500).json({ error: 'Failed to fetch user posts' });
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Failed to fetch posts' });
   }
 };
 
 exports.getPost = async (req, res) => {
   const { id } = req.params;
+
   try {
     const post = await Post.findByPk(id, {
       include: [
-        { model: User, as: 'author', attributes: ['id', 'username', 'avatar', 'address'] },
+        { model: User, as: 'author', attributes: ['id', 'username', 'avatar'] },
         {
-          model: Comment,
-          as: 'Comments',
-          include: [{ model: User, attributes: ['id', 'username', 'avatar'] }],
-          order: [['createdAt', 'DESC']]
+          model: Post,
+          as: 'responses',
+          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
+          order: [['createdAt', 'DESC']],
         },
-        {
-          model: Hashtag,
-          as: 'Hashtags',
-          attributes: ['name'],
-          through: { attributes: [] }
-        }
       ],
     });
 
@@ -110,7 +93,7 @@ exports.getPost = async (req, res) => {
 
     res.json(post);
   } catch (error) {
-    console.error('Error fetching post:', error);
+    console.error('Error fetching post with replies:', error);
     res.status(500).json({ error: 'Failed to fetch post' });
   }
 };
@@ -123,13 +106,21 @@ exports.likePost = async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    await post.addLikedBy(req.user);
-    post.likes += 1;
-    await post.save();
+    const likedBy = await post.getLikedBy();
+    const isLikedBy = likedBy.some(user => user.id === req.user.id)
 
-    await createNotification('like',post.authorId,req.user.id,post.id);
-
-    res.json({ message: 'Post liked successfully', likes: post.likes });
+    if(isLikedBy) {
+      await post.removeLikedBy(req.user);
+      post.likes -= 1;
+      await post.save();
+      res.json({ message: 'Post unliked successfully', likes: post.likes, liked:false });
+    } else {
+      await post.addLikedBy(req.user);
+      post.likes += 1;
+      await post.save();
+      await createNotification('like',post.authorId,req.user.id,post.id);
+      res.json({ message: 'Post liked successfully', likes: post.likes, liked: true });
+    }
   } catch (error) {
     console.error('Failed to like post:', error);
     res.status(500).json({ error: 'Failed to like post' });
@@ -137,31 +128,39 @@ exports.likePost = async (req, res) => {
 };
 
 exports.commentPost = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params; // ID du post parent
   const { content } = req.body;
+  const media = req.file ? req.file.filename : null;
+
   try {
-    const post = await Post.findByPk(id);
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+    const parentPost = await Post.findByPk(id, {
+      include: [
+        { model: User, as: 'author', attributes: ['id', 'username', 'avatar'] },
+        {
+          model: Post,
+          as: 'responses',
+          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
+          order: [['createdAt', 'DESC']],
+        },
+      ],
+    });
+    if (!parentPost) {
+      return res.status(404).json({ error: 'Parent post not found' });
     }
 
-    const comment = await Comment.create({
+    const comment = await Post.create({
       content,
-      userId: req.user.id,
-      postId: post.id,
+      media,
+      authorId: req.user.id,
+      parentPostId: parentPost.id,
     });
 
-    const commentWithUser = await Comment.findByPk(comment.id, {
-      include: [{ model: User, attributes: ['id', 'username', 'avatar'] }]
-    });
+    await createNotification('comment',parentPost.authorId,req.user.id,parentPost.id,comment.id);
 
-
-    await createNotification('comment',post.authorId, req.user.id,post.id,comment.id);
-
-    res.status(201).json(commentWithUser);
+    res.status(201).json(parentPost);
   } catch (error) {
-    console.error('Failed to add comment:', error);
-    res.status(500).json({ error: 'Failed to add comment' });
+    console.error('Failed to add reply:', error);
+    res.status(500).json({ error: 'Failed to add reply' });
   }
 };
 
@@ -173,24 +172,40 @@ exports.repostPost = async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    const repost = await Post.create({
-      content: originalPost.content,
-      media: originalPost.media,
-      authorId: req.user.id,
-      originalPostId: originalPost.id,
+    // Vérifier si l'utilisateur a déjà reposté ce post
+    const existingRepost = await Post.findOne({
+      where: {
+        originalPostId: originalPost.id,
+        repostedById: req.user.id, // Vérifie si cet utilisateur a reposté
+      },
     });
 
+    if (existingRepost) {
+      // Supprimer le repost existant
+      await existingRepost.destroy();
+      originalPost.reposts -= 1;
+      await originalPost.save();
+
+      return res.status(200).json({ isReposted: false, reposts: originalPost.reposts });
+    }
+
+    // Créer une référence au post original avec repostedById
+    await Post.create({
+      originalPostId: originalPost.id,
+      repostedById: req.user.id, // Utilisateur qui a fait le repost
+    });
+
+    // Incrémenter le compteur de reposts sur le post original
     originalPost.reposts += 1;
     await originalPost.save();
 
-    await createNotification('repost',originalPost.authorId,req.user.id,originalPost.id);
-
-    res.status(201).json({ repost, reposts: originalPost.reposts });
+    return res.status(201).json({ isReposted: true, reposts: originalPost.reposts });
   } catch (error) {
     console.error('Failed to repost:', error);
     res.status(500).json({ error: 'Failed to repost' });
   }
 };
+
 
 exports.createPost = async (req, res) => {
   const { content } = req.body;

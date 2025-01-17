@@ -17,7 +17,6 @@ const cryptoRoutes = require('./routes/cryptoRoutes');
 const User = require('./models/user');
 const UserFollows = require('./models/userFollow');
 const Post = require('./models/post');
-const Comment = require('./models/comment');
 const Notification = require('./models/notification');
 const Hashtag = require('./models/hashtag');
 

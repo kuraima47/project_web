@@ -7,9 +7,9 @@ const upload = require('../middlewares/upload');
 const router = express.Router();
 
 router.get('/', authenticate, postController.getAllPosts);
+router.get('/:id', authenticate, postController.getPost);
 router.get('/user/:address', authenticate, postController.getUserPosts);
 router.post('/', authenticate, upload.single('media'), postController.createPost);
-router.get('/:id', authenticate, postController.getPost);
 router.post('/:id/like', authenticate, postController.likePost);
 router.post('/:id/comment', authenticate, postController.commentPost);
 router.post('/:id/repost', authenticate, postController.repostPost);

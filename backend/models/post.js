@@ -1,14 +1,8 @@
-// models/post.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./user');
-const Comment = require('./comment');
 const Hashtag = require('./hashtag');
 
-/**
- * Modèle Post : on stocke l'auteur dans 'authorId' (FK vers la table User).
- * Ajout du champ originalPostId pour le repost.
- */
 const Post = sequelize.define('Post', {
   content: {
     type: DataTypes.TEXT,
@@ -26,34 +20,29 @@ const Post = sequelize.define('Post', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  // Pour gérer le repost
   originalPostId: {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  parentPostId: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // null means it's a root post
+  },
 });
 
-// Relation post <-> user (author)
+// Relations
 Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
 User.hasMany(Post, { foreignKey: 'authorId' });
 
-// Relation post <-> comment
-Post.hasMany(Comment, { foreignKey: 'postId' });
-Comment.belongsTo(Post, { foreignKey: 'postId' });
-
-// Relation user <-> comment
-User.hasMany(Comment, { foreignKey: 'userId' });
-Comment.belongsTo(User, { foreignKey: 'userId' });
-
-// Relation post <-> hashtag (many-to-many)
 Post.belongsToMany(Hashtag, { through: 'PostHashtags' });
 Hashtag.belongsToMany(Post, { through: 'PostHashtags' });
 
-Post.belongsToMany(User, { through: 'PostLikes', as: 'likedBy' });
-User.belongsToMany(Post, { through: 'PostLikes', as: 'likedPosts' });
+Post.belongsToMany(User, { through: 'PostLikes', as: 'likedBy', foreignKey: 'postId', unique: true });
+User.belongsToMany(Post, { through: 'PostLikes', as: 'likedPosts', foreignKey: 'userId', unique: true });
 
-// Auto-référence pour gérer l'originalPost en cas de repost
+// Auto-references
 Post.belongsTo(Post, { as: 'originalPost', foreignKey: 'originalPostId' });
+Post.belongsTo(Post, { as: 'parentPost', foreignKey: 'parentPostId' });
+Post.hasMany(Post, { as: 'responses', foreignKey: 'parentPostId' });
 
 module.exports = Post;
-
