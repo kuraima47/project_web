@@ -88,7 +88,7 @@ export default function UserProfile() {
                 {user.username ||
                   `${user.address.slice(0, 6)}...${user.address.slice(-4)}`}
               </CardTitle>
-              <p className="text-muted-foreground">{user.bio || "No bio available"}</p>
+              <p className="text-muted-foreground">{user.bio || "Cet utilisateur n'a pas de bio."}</p>
               <div className="flex space-x-4 mt-2 text-sm">
                 <button className="text-primary hover:underline">
                   {user.followers || 0} abonnés
