@@ -19,7 +19,7 @@ exports.search = async (req, res) => {
                         { bio: { [Op.like]: `%${term}%` } }
                     ]
                 },
-                attributes: ['id', 'username', 'avatar', 'bio']
+                attributes: ['id',  'address', 'username', 'avatar', 'bio']
             });
             results.push(...users.map(u => ({ ...u.toJSON(), type: 'user' })));
         }
