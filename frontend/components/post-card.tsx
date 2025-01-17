@@ -45,7 +45,6 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
   const [reposts, setReposts] = useState(initialReposts)
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const relativeTime = formatRelativeTime(new Date(createdAt))
-  console.log("comments Count :", commentCount)
   const handleLike = async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/posts/${id}/like`, {

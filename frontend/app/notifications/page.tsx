@@ -29,6 +29,7 @@ export default function Notifications() {
 
     useEffect(() => {
         fetchNotifications()
+        markAllAsRead()
     }, [])
 
     const fetchNotifications = async () => {
@@ -49,19 +50,15 @@ export default function Notifications() {
         }
     }
 
-    const markAsRead = async (id: string) => {
+    const markAllAsRead = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/api/notifications/${id}/read`, {
+            const response = await fetch(`http://localhost:3001/api/notifications/all/read`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             })
-            if (response.ok) {
-                setNotifications(notifications.map(notif =>
-                    notif.id === id ? { ...notif, read: true } : notif
-                ))
-            } else {
+            if (!response.ok) {
                 throw new Error('Failed to mark notification as read')
             }
         } catch (error) {
@@ -111,7 +108,6 @@ export default function Notifications() {
                     <Card
                         key={notification.id}
                         className={`cursor-pointer transition-colors ${notification.read ? 'bg-background' : 'bg-accent'}`}
-                        onClick={() => markAsRead(notification.id)}
                     >
                         <CardContent className="flex items-center space-x-4 p-4">
                             <Avatar>
