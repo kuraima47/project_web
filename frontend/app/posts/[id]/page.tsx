@@ -187,13 +187,13 @@ export default function PostDetail() {
 
             {/* Bouton de retour au parent si ce n'est pas un post racine */}
             {post.parentPostId && (
-                <Link href={`/posts/${post.parentPostId}`} className="fixed left-1/3 transform -translate-x-1/2 top-1/2 z-50 bg-white p-2 rounded-full shadow-lg">
+                <Link href={`/posts/${post.parentPostId}`} className="fixed left-1/3 transform -translate-x-1/2 top-1/2 z-50 bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg">
                     <ArrowLeft className="text-lg" />
                 </Link>
             )}
 
             {!post.parentPostId && (
-                <Link href={`/#${post.id}`} className="fixed left-1/3 transform -translate-x-1/2 top-1/2 z-50 bg-white p-2 rounded-full shadow-lg">
+                <Link href={`/#${post.id}`} className="fixed left-1/3 transform -translate-x-1/2 top-1/2 z-50 dark:bg-gray-800 bg-white p-2 rounded-full shadow-lg">
                     <ArrowLeft className="text-lg" />
                 </Link>
             )}

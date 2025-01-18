@@ -2,6 +2,7 @@
 
 const Post = require('../models/post');
 const User = require('../models/user');
+const Repost = require('../models/repost');
 const Hashtag = require('../models/hashtag');
 const { createNotification } = require('../services/notificationService');
 
@@ -40,7 +41,16 @@ exports.getAllPosts = async (req, res) => {
 
 exports.getUserPosts = async (req, res) => {
   const { address } = req.params;
+  const userId = req.user.id; // Utilisateur actuel qui effectue la demande
+
   try {
+
+    
+    const userToCheck = await User.findOne({where: { address: address }})
+
+    if(!userToCheck)
+      res.status(404).json({ error: 'Utilisateur introuvable avec ladresse spécifiée' });
+    // Étape 1 : Récupérer les posts originaux de l'utilisateur spécifié
     const posts = await Post.findAll({
       where: { '$author.address$': address, parentPostId: null }, // Ne récupérer que les posts racines
       include: [
@@ -64,12 +74,56 @@ exports.getUserPosts = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
-    res.json(posts);
+
+    // Étape 2 : Récupérer les reposts faits par l'utilisateur
+    const reposts = await Post.findAll({
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'username', 'avatar', 'address'],
+        },
+        {
+          model: Post,
+          as: 'responses',
+          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
+        },
+        {
+          model: Hashtag,
+          as: 'Hashtags',
+          attributes: ['name'],
+          through: { attributes: [] },
+        },
+        {
+          model: User,
+          as: 'repostedBy',
+          through: { attributes: ['createdAt'] }, // Récupère la date de repost depuis la table Repost
+          attributes: ['id', 'username', 'avatar'],
+        },
+      ],
+      where: { '$repostedBy.id$': userToCheck.id }, // Récupérer les posts où l'utilisateur actuel a reposté
+    });
+
+    // Ajouter la date de repost (createdAt) dans les reposts
+    reposts.forEach((repost) => {
+      repost.repostDate = repost.repostedBy[0].Repost.createdAt; // Accède à la date de repost
+    });
+
+    // Étape 3 : Combiner les posts originaux et les reposts
+    // On peut concaténer les deux tableaux de posts et trier par la date de création ou de repost.
+    const combinedPosts = [...posts, ...reposts].sort((a, b) => {
+      const aDate = a.repostDate || a.createdAt; // Utilise la date du repost si présente, sinon la date de création du post
+      const bDate = b.repostDate || b.createdAt;
+      return new Date(bDate) - new Date(aDate); // Trie du plus récent au plus ancien
+    });
+
+    res.json(combinedPosts);
   } catch (error) {
     console.error('Error fetching posts:', error);
     res.status(500).json({ error: 'Failed to fetch posts' });
   }
 };
+
 
 exports.getPost = async (req, res) => {
   const { id } = req.params;
@@ -164,6 +218,28 @@ exports.commentPost = async (req, res) => {
   }
 };
 
+
+exports.getPostInfos =  async (req, res) => {
+  const { id } = req.params;
+  try {
+    const isReposted = await Repost.findOne({
+      where: {
+        postId: id,
+        userId: req.user.id, 
+      },
+    });
+
+    const existingLike = await Post.findByPk(id);
+    const likedBy = await existingLike.getLikedBy();
+    const isLiked = likedBy.some(user => user.id === req.user.id)
+
+    return res.status(201).json({isLiked:isLiked, isReposted:isReposted});
+  } catch (error) {
+    console.error('Failed to repost:', error);
+    res.status(500).json({ error: 'Failed to repost' });
+  }
+}
+
 exports.repostPost = async (req, res) => {
   const { id } = req.params;
   try {
@@ -173,27 +249,30 @@ exports.repostPost = async (req, res) => {
     }
 
     // Vérifier si l'utilisateur a déjà reposté ce post
-    const existingRepost = await Post.findOne({
+    const existingRepost = await Repost.findOne({
       where: {
-        originalPostId: originalPost.id,
-        repostedById: req.user.id, // Vérifie si cet utilisateur a reposté
+        postId: originalPost.id,
+        userId: req.user.id, // Vérifie si cet utilisateur a reposté
       },
     });
 
     if (existingRepost) {
-      // Supprimer le repost existant
+      // Si le repost existe déjà, supprimer l'entrée de la table "Repost"
       await existingRepost.destroy();
+
+      // Décrémenter le nombre de reposts du post original
       originalPost.reposts -= 1;
       await originalPost.save();
-
       return res.status(200).json({ isReposted: false, reposts: originalPost.reposts });
     }
 
-    // Créer une référence au post original avec repostedById
-    await Post.create({
-      originalPostId: originalPost.id,
-      repostedById: req.user.id, // Utilisateur qui a fait le repost
+    // Créer la relation dans la table "Repost"
+    await Repost.create({
+      postId: originalPost.id,
+      userId: req.user.id, // Utilisateur qui a reposté
     });
+
+    await createNotification('repost',originalPost.authorId,req.user.id,originalPost.id);
 
     // Incrémenter le compteur de reposts sur le post original
     originalPost.reposts += 1;
