@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { getApiUrl } from "@/utils/address";
 
 interface SearchResult {
     type: 'user' | 'post' | 'hashtag';
@@ -33,7 +34,7 @@ export default function UserSearchInput({ onSelectUser }: UserSearchInputProps) 
             }
             // Appel à l’API pour ne récupérer que des users
             const response = await fetch(
-                `http://localhost:3001/api/search?term=${term}&type=user`,
+                getApiUrl(`/api/search?term=${term}&type=user`),
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,

@@ -9,6 +9,7 @@ import { PostCard } from "@/components/post-card";
 import { useAuth } from "@/contexts/auth-context";
 import { EditProfileModal } from "@/components/edit-profile-modal";
 import { Repeat2 } from 'lucide-react'
+import { getApiUrl } from "@/utils/address";
 
 export default function UserProfile() {
   const { address } = useParams();
@@ -33,7 +34,7 @@ export default function UserProfile() {
   const fetchUserProfile = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/profile/${address}`,
+        getApiUrl(`/api/users/profile/${address}`),
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -54,7 +55,7 @@ export default function UserProfile() {
   const fetchFollowers = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${address}/followers`,
+        getApiUrl(`/api/users/${address}/followers`),
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -75,7 +76,7 @@ export default function UserProfile() {
   const fetchFollowing = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${address}/following`,
+        getApiUrl(`/api/users/${address}/following`),
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -96,7 +97,7 @@ export default function UserProfile() {
   const fetchUserPosts = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/posts/user/${address}`,
+        getApiUrl(`/api/posts/user/${address}`),
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -119,7 +120,7 @@ export default function UserProfile() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${address}/doFollow/`,
+        getApiUrl(`/api/users/${address}/doFollow/`),
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -141,7 +142,7 @@ export default function UserProfile() {
   const followUser = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${address}/follow`,
+        getApiUrl(`/api/users/${address}/follow`),
         {
           method: "POST",
           headers: {
@@ -163,7 +164,7 @@ export default function UserProfile() {
   const unfollowUser = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${address}/unfollow`,
+        getApiUrl(`/api/users/${address}/unfollow`),
         {
           method: "DELETE",
           headers: {

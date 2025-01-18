@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { ethers } from 'ethers'
+import { getApiUrl } from "@/utils/address";
 
 type User = {
     id: number
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const fetchUserProfile = async (token: string) => {
         try {
-            const response = await fetch('http://localhost:3001/api/users/profile', {
+            const response = await fetch(getApiUrl('/api/users/profile'), {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -67,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const message = `Connexion à BlockTwit: ${Date.now()}`
                 const signature = await signer.signMessage(message)
 
-                const response = await fetch('http://localhost:3001/api/users/auth', {
+                const response = await fetch(getApiUrl('/api/users/auth'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!user) throw new Error('User not authenticated')
 
         try {
-            const response = await fetch('http://localhost:3001/api/users/register', {
+            const response = await fetch(getApiUrl('/api/users/register'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -128,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!user) throw new Error('User not authenticated')
 
         try {
-            const response = await fetch('http://localhost:3001/api/users/update', {
+            const response = await fetch(getApiUrl('/api/users/update'), {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

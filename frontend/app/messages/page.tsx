@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { io } from "socket.io-client";
 import { useRouter } from "next/navigation";
+import { getApiUrl, getWsMessage } from "@/utils/address";
+
 
 import UserSearchInput from "@/components/UserSearchInput"; // <-- L'import du composant
 
@@ -24,7 +26,7 @@ export default function Messages() {
 
   useEffect(() => {
     // Connexion Socket.io
-    const socket = io("http://localhost:3001", {
+    const socket = io(getWsMessage(), {
       query: { token: localStorage.getItem("token") },
     });
     // Le serveur écoute l'événement "listenMyRooms" pour
@@ -34,7 +36,7 @@ export default function Messages() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:3001/api/messages", {
+        const response = await fetch(getApiUrl("/api/messages"), {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -102,7 +104,7 @@ export default function Messages() {
 
   const handleNewConversation = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/messages", {
+      const response = await fetch(getApiUrl("/api/messages"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -137,7 +139,7 @@ export default function Messages() {
   const handleAcceptRequest = async (requestUserId: string) => {
     try {
       const response = await fetch(
-          `http://localhost:3001/api/messages/${requestUserId}/accept`,
+          getApiUrl(`/api/messages/${requestUserId}/accept`),
           {
             method: "POST",
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

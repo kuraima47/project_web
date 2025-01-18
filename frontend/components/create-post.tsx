@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Video } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
-
+import { getApiUrl } from '@/utils/address'
 interface CreatePostProps {
   onPostCreated: () => void;
 }
@@ -26,7 +26,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/posts', {
+      const response = await fetch(getApiUrl('/api/posts'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

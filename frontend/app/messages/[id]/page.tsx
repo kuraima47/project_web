@@ -9,8 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { io } from "socket.io-client";
 import Link from "next/link";
+import { getApiUrl, getWsMessage } from "@/utils/address";
 
-let socket = io("http://localhost:3001", {
+let socket = io(getWsMessage(), {
   query: {
     token: localStorage.getItem("token"),
   }
@@ -28,14 +29,14 @@ export default function Conversation() {
   const scrollAreaRef = useRef(null); // Ref pour la ScrollArea
 
   useEffect(() => {
-    socket = io("http://localhost:3001", {
+    socket = io(getWsMessage(), {
       query: {
         token: localStorage.getItem("token"),
       }
     });
     const fetchConversation = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/messages/${params.id}`, {
+        const response = await fetch(getApiUrl(`/api/messages/${params.id}`), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await response.json();
@@ -92,7 +93,7 @@ export default function Conversation() {
       };
 
       try {
-        const response = await fetch(`http://localhost:3001/api/messages/${friendUser.id}`, {
+        const response = await fetch(getApiUrl(`/api/messages/${friendUser.id}`), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

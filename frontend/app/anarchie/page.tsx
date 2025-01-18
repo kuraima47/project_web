@@ -8,8 +8,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { io } from "socket.io-client";
 import Link from 'next/link'
+import { getApiUrl, getWsMessage } from "@/utils/address";
 
-let socket = io("http://localhost:3001", {
+let socket = io(getWsMessage(), {
   query: {
     token: "", // Le token pour l'authentification, mais pas nécessaire pour la room -1
   }
@@ -28,13 +29,13 @@ export default function Anarchie() {
 
   // Écouter les messages reçus en temps réel
   useEffect(() => {
-    socket = io("http://localhost:3001", {
+    socket = io(getWsMessage(), {
       query: {
         token: localStorage.getItem("token"), // Le token pour l'authentification, mais pas nécessaire pour la room -1
       }
     });
     const fetchConversation = async () => {
-      const response = await fetch(`http://localhost:3001/api/users/fromToken/`, {
+      const response = await fetch(getApiUrl("/api/users/fromToken/"), {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await response.json();

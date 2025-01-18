@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Line, Scatter } from "react-chartjs-2"; // Utilisation de Line pour le graphique de ligne
 import "chart.js/auto";
+import { getApiUrl } from "@/utils/address";
 
 export default function Cryptos() {
   const [cryptoData, setCryptoData] = useState([]);  // Contient les données historiques de la crypto
@@ -16,7 +17,7 @@ export default function Cryptos() {
   useEffect(() => {
     const fetchCryptos = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/cryptos");
+        const response = await fetch(getApiUrl("/api/cryptos"));
         const data = await response.json();
 
         setCryptoList(data.data || []);
@@ -42,7 +43,7 @@ export default function Cryptos() {
   // Fonction pour charger les données de prix historiques de la crypto sélectionnée
   const fetchCryptoData = async (cryptoName) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/cryptos/${cryptoName}`);
+      const response = await fetch(getApiUrl(`/cryptos/${cryptoName}`));
       const data = await response.json();
       setCryptoData(data || []);
       console.log(data);
