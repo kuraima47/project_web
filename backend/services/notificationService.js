@@ -3,7 +3,6 @@
 const Notification = require('../models/notification');
 const User = require('../models/user');
 const Post = require('../models/post');
-const Comment = require('../models/comment');
 const { getIoNotifications } = require('../socket');
 const { getSocketIdFromUserId } = require('../websockets/notifications')
 // Fonction pour créer une notification
@@ -29,7 +28,7 @@ exports.createNotification = async (type, userId, actorId, postId=null, commentI
 
     let comment = null;
     if(commentId != null)
-      comment = await Comment.findByPk(commentId);
+      comment = await Post.findByPk(commentId);
 
     let message = "";
     switch (type) {
@@ -37,7 +36,7 @@ exports.createNotification = async (type, userId, actorId, postId=null, commentI
           message = "a liké votre post : " + post.content.substring(0, 40);  // Trim et limité à 40 caractères
           break;
       case 'comment':
-          message = "a commenté votre post : " + post.content.substring(0, 20) + " ... >> " + comment.content.substring(0, 20) + "...";
+          message = "a commenté votre post : \'" + comment.content.substring(0, 20) + "[...]\'";
           break;
       case 'repost':
           message = "a reposté votre post : " + post.content.substring(0, 40);
@@ -58,6 +57,8 @@ exports.createNotification = async (type, userId, actorId, postId=null, commentI
     let hrefValue = "";
     if(postId != null)
       hrefValue = `/posts/${postId}`
+    if(commentId != null) 
+      hrefValue = `/posts/${commentId}`
 
     sendRealTimeNotification(userId, type, actor, message, hrefValue);
     return notification;

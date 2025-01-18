@@ -23,7 +23,6 @@ exports.getNotifications = async (req, res) => {
 };
 
 exports.getUnreadNotifications = async (req, res) => {
-    console.log("unread!");
     try {
         const notifications = await Notification.findAll({
             where: { userId: req.user.id, read: false },

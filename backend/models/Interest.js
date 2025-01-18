@@ -20,14 +20,11 @@ const Interest = sequelize.define('Interest', {
     timestamps: false,      // si tu n’as pas besoin de createdAt/updatedAt
 });
 
-
-
 Interest.belongsToMany(User, {
     through: UserInterest,
     foreignKey: 'interestId',
     otherKey: 'userId',
     as: 'users',
 });
-
 
 module.exports = Interest;
