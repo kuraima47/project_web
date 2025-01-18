@@ -3,6 +3,8 @@
 const { ethers } = require('ethers');
 const User = require('../models/user');
 const Notification = require('../models/notification');
+const Interest = require('../models/Interest');
+const UserInterest = require('../models/UserInterest')
 const UserFollows = require('../models/userFollow');
 const jwt = require('jsonwebtoken');
 const { createNotification } = require('../services/notificationService');
