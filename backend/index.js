@@ -12,7 +12,6 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const cryptoRoutes = require('./routes/cryptoRoutes');
-const feedRoutes = require('./routes/feedRoutes');
 const pixelWarRoutes = require('./routes/pixelWarRoutes');
 
 // Import des modèles
@@ -51,7 +50,6 @@ app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/feed', feedRoutes);
 app.use('/api/pixels', pixelWarRoutes);
 
 // Sync des modèles et démarrage du serveur
