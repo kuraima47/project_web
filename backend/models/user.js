@@ -64,4 +64,10 @@ User.belongsToMany(Interest, {
   as: 'interests',
 });
 
+Interest.belongsToMany(User, {
+  through: UserInterest,
+  foreignKey: 'interestId',
+  otherKey: 'userId'
+});
+
 module.exports = User;

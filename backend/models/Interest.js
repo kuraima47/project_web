@@ -22,12 +22,5 @@ const Interest = sequelize.define('Interest', {
 
 
 
-Interest.belongsToMany(User, {
-    through: UserInterest,
-    foreignKey: 'interestId',
-    otherKey: 'userId',
-    as: 'users',
-});
-
 
 module.exports = Interest;
