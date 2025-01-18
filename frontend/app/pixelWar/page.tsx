@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker"; // Un composant personnalisé pour choisir la couleur
 import { io } from "socket.io-client";
 
+import { getApiUrl } from "@/utils/address";
+import { getWsPixelWarUrl, getWsPixelWarPath } from "@/utils/address";
+
 const GridSize = 60; // 100x100 cases
 const PixelSize = 30; // Taille de chaque pixel (20x20px)
 
@@ -15,12 +18,14 @@ export default function PixelWar() {
   const [pixels, setPixels] = useState([]); // Pixels à afficher
   const [isZoomed, setIsZoomed] = useState(false);
 
+  const path = getWsPixelWarPath();
   useEffect(() => {
     // Charger les pixels du backend (via API)
-    const socket = io("http://localhost:3003", {
+    const socket = io(getWsPixelWarUrl(), {
       query: {
         token: localStorage.getItem("token"),
       },
+      path: path
     });
 
     // Recevoir les notifications en temps réel via WebSocket
@@ -32,7 +37,7 @@ export default function PixelWar() {
     // Cleanup du socket à la déconnexion du composant
     const fetchPixels = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/pixels", {
+        const response = await fetch(getApiUrl("/api/pixels"), {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -84,7 +89,7 @@ export default function PixelWar() {
     const newPixel = { x, y, color };
 
     try {
-      const response = await fetch("http://localhost:3001/api/pixels", {
+      const response = await fetch(getApiUrl("/api/pixels"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

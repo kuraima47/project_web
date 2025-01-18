@@ -9,11 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { io } from "socket.io-client";
 import Link from "next/link";
+import { getApiUrl, getWsMessagePath, getWsMessageUrl } from "@/utils/address";
 
-let socket = io("http://localhost:3001", {
+let socket = io(getWsMessageUrl(), {
   query: {
-    token: localStorage.getItem("token"),
+    token: "",
   },
+  path: getWsMessagePath()
 });
 
 export default function Conversation() {
@@ -30,9 +32,15 @@ export default function Conversation() {
 
   // Fetch initial conversation data
   useEffect(() => {
+    socket = io(getWsMessageUrl(), {
+      query: {
+        token: localStorage.getItem("token"),
+      },
+      path: getWsMessagePath()
+    });
     const fetchConversation = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/messages/${params.id}`, {
+        const response = await fetch(getApiUrl(`/api/messages/${params.id}`), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await response.json();
@@ -50,10 +58,11 @@ export default function Conversation() {
     };
     fetchConversation();
 
-    socket = io("http://localhost:3001", {
+    socket = io(getWsMessageUrl(), {
       query: {
         token: localStorage.getItem("token"),
       },
+      path: getWsMessagePath()
     });
     // Cleanup
     return () => {
@@ -64,7 +73,7 @@ export default function Conversation() {
 
   const checkLastMessageSeen = async () => {
     const response = await fetch(
-      `http://localhost:3001/api/messages/${conversationId}/isLastMessageSeen`,
+      getApiUrl(`/api/messages/${conversationId}/isLastMessageSeen`),
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -85,7 +94,7 @@ export default function Conversation() {
 
     const markAsSeen = async () => {
       await fetch(
-        `http://localhost:3001/api/messages/${conversationId}/markAsSeen`,
+        getApiUrl(`/api/messages/${conversationId}/markAsSeen`),
         {
           method: "POST",
           headers: {
@@ -139,7 +148,7 @@ export default function Conversation() {
       };
 
       try {
-        const response = await fetch(`http://localhost:3001/api/messages/${friendUser.id}`, {
+        const response = await fetch(getApiUrl(`/api/messages/${friendUser.id}`), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

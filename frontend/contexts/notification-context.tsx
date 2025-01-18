@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { CustomToast } from "@/components/ui/customToast";
+import { getApiUrl } from "@/utils/address";
 
 type NotificationContextType = {
   notify: (
@@ -31,7 +32,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const fetchUnreadNotifications = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/notifications/unread", {
+      const response = await fetch(getApiUrl("/api/notifications/unread"), {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

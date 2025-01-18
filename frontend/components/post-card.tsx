@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Repeat2 } from 'lucide-react'
 import Link from 'next/link'
 import { formatRelativeTime } from "@/lib/utils"
 import { CommentModal } from './comment-modal'
+import { getApiUrl } from "@/utils/address";
 
 interface Comment {
   id: string
@@ -55,7 +56,7 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
 
   const initLikeRepostComment = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/posts/infos/${id}`, {
+      const response = await fetch(getApiUrl(`/api/posts/infos/${id}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -75,12 +76,13 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
 
   const handleLike = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/posts/${id}/like`, {
+      const response = await fetch(getApiUrl(`/api/posts/${id}/like`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       })
+
       if (response.ok) {
         const data = await response.json()
         setLikes(data.likes)
@@ -96,7 +98,7 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
 
   const handleRepost = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/posts/${id}/repost`, {
+      const response = await fetch(getApiUrl(`/api/posts/${id}/repost`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -121,7 +123,7 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
 
   const handleCommentSubmit = async (content: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/posts/${id}/comment`, {
+      const response = await fetch(getApiUrl(`/api/posts/${id}/comment`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

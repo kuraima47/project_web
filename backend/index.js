@@ -23,7 +23,6 @@ const Hashtag = require('./models/hashtag');
 const feedRoutes = require('./routes/feedRoutes');
 
 const app = express();
-const port = process.env.PORT || 3001;
 
 
 // Sockets
@@ -57,14 +56,14 @@ app.use('/api/feed', feedRoutes);
 // Sync des modèles et démarrage du serveur
 sequelize.sync({ alter: true }).then(() => {
   console.log('Database synced');
-  server.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+  server.listen(3001, () => {
+    console.log(`Server running on port 3001`);
   });
-  notificationServer.listen(port+1, () => {
+  notificationServer.listen(3002, () => {
     console.log(`Notification WebSocket server running on port 3002`);
   });
 
-  pixelwarServer.listen(port+2, () => {
+  pixelwarServer.listen(3003, () => {
     console.log(`PixelWar WebSocket server running on port 3003`);
   })
 });

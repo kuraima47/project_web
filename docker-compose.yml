@@ -10,7 +10,7 @@ services:
     depends_on:
       - redis
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
     networks:
       - app_network
 
@@ -23,7 +23,7 @@ services:
     volumes:
       - ./frontend:/usr/src/app
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
     networks:
       - app_network
 
@@ -43,7 +43,7 @@ services:
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - ./certs:/etc/letsencrypt
-      - ./certs-data:/data/letsencrypt
+      - ./certs-data:/data/letencrypt
     depends_on:
       - frontend
       - backend
@@ -56,16 +56,18 @@ services:
     depends_on:
       - nginx
     command: >-
-             certonly --reinstall --webroot --webroot-path=/data/letsencrypt
-             --email gallonemilien@gmail.com --agree-tos --no-eff-email
-             -d panneauramix.fr
-             -d www.panneauramix.fr
+      certonly --webroot --webroot-path=/data/letsencrypt
+      --email gallonemilien@gmail.com --agree-tos --no-eff-email
+      --keep-until-expiring
+      -d panneauramix.fr
+      -d www.panneauramix.fr
     volumes:
       - ./certs:/etc/letsencrypt
       - ./certs-data:/data/letsencrypt
       - ./nginx:/var/www/html
     networks:
       - app_network
+
 
 networks:
   app_network:

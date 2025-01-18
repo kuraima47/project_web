@@ -1,9 +1,10 @@
 const redis = require('redis');
 const cron = require('node-cron');
+const redisClient = require('./redisClient');
 
-// Créez un client Redis
-const redisClient = redis.createClient();
-redisClient.connect();
+
+console.log(process.env.NODE_ENV);
+
 
 // Définir un cache clé
 const cacheKey = 'crypto_set';

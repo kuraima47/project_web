@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { CreatePost } from "@/components/create-post"
 import { PostCard } from "@/components/post-card"
+import { getApiUrl } from "@/utils/address";
 
 export default function Home() {
     const { user, isLoading } = useAuth()
@@ -21,7 +22,7 @@ export default function Home() {
 
     const fetchPosts = async () => {
         try {
-            const response = await fetch('http://localhost:3001/api/posts', {
+            const response = await fetch(getApiUrl("/api/posts"), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }

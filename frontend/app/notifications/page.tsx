@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Bell, Heart, MessageCircle, Repeat2, UserPlus, UserMinus } from 'lucide-react'
+import { getApiUrl } from "@/utils/address";
 
 interface Notification {
     id: string
@@ -33,7 +34,7 @@ export default function Notifications() {
 
     const fetchNotifications = async () => {
         try {
-            const response = await fetch('http://localhost:3001/api/notifications', {
+            const response = await fetch(getApiUrl('/api/notifications'), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -51,7 +52,7 @@ export default function Notifications() {
 
     const markAllAsRead = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/api/notifications/all/read`, {
+            const response = await fetch(getApiUrl(`/api/notifications/all/read`), {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`

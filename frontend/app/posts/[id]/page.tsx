@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from '@/contexts/auth-context'
 import { ArrowLeft } from 'lucide-react'
+import { getApiUrl } from "@/utils/address";
 
 interface Post {
     id: string
@@ -40,7 +41,7 @@ export default function PostDetail() {
 
     const fetchPost = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/api/posts/${id}`, {
+            const response = await fetch(getApiUrl(`/api/posts/${id}`), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -65,7 +66,7 @@ export default function PostDetail() {
 
         // Remonter l'arbre des posts jusqu'à la racine
         while (post.parentPostId) {
-            const response = await fetch(`http://localhost:3001/api/posts/${post.parentPostId}`, {
+            const response = await fetch(getApiUrl(`/api/posts/${post.parentPostId}`), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}` // Ajoutez ici l'authentification si nécessaire
                 }
@@ -90,7 +91,7 @@ export default function PostDetail() {
         const replyContent = content.value;
 
         try {
-            const response = await fetch(`http://localhost:3001/api/posts/${id}/comment`, {
+            const response = await fetch(getApiUrl(`/api/posts/${id}/comment`), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

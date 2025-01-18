@@ -70,6 +70,7 @@ exports.createNotification = async (type, userId, actorId, postId=null, commentI
 
 // Fonction pour envoyer la notification en temps réel via WebSocket
 function sendRealTimeNotification(userId, type, actor, message,hrefValue) {
+  console.log("envoie notification"+userId+" type:"+type);
   getIoNotifications().to(getSocketIdFromUserId(userId)).emit('receiveNotification', {type, actor, message, hrefValue });
 }
 

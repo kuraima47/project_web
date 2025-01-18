@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from 'next/link'
+import { getApiUrl } from "@/utils/address";
 
 interface SearchResult {
   type: 'user' | 'post' | 'hashtag'
@@ -29,7 +30,7 @@ export function AdvancedSearch() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch(`http://localhost:3001/api/search?term=${searchTerm}&type=${searchType}`, {
+      const response = await fetch(getApiUrl(`/api/search?term=${searchTerm}&type=${searchType}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
