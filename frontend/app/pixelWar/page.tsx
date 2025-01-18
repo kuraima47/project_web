@@ -7,7 +7,7 @@ import { ColorPicker } from "@/components/ui/color-picker"; // Un composant pers
 import { io } from "socket.io-client";
 
 import { getApiUrl } from "@/utils/address";
-import { getWsPixel } from "@/utils/address";
+import { getWsPixelWarUrl, getWsPixelWarPath } from "@/utils/address";
 
 const GridSize = 60; // 100x100 cases
 const PixelSize = 30; // Taille de chaque pixel (20x20px)
@@ -18,12 +18,14 @@ export default function PixelWar() {
   const [pixels, setPixels] = useState([]); // Pixels à afficher
   const [isZoomed, setIsZoomed] = useState(false);
 
+  const path = getWsPixelWarPath();
   useEffect(() => {
     // Charger les pixels du backend (via API)
-    const socket = io(getWsPixel(), {
+    const socket = io(getWsPixelWarUrl(), {
       query: {
         token: localStorage.getItem("token"),
       },
+      path: path
     });
 
     // Recevoir les notifications en temps réel via WebSocket

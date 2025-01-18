@@ -18,7 +18,6 @@ exports.authenticate = async (req, res, next) => {
     // Vérification du token
     const secretKey = process.env.JWT_SECRET || 'jwt_secret_key';
 
-    console.log(secretKey);
     const decoded = jwt.verify(token, secretKey);
 
     // Vérifier si on a bien un id dans le payload

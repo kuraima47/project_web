@@ -9,12 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { io } from "socket.io-client";
 import Link from "next/link";
-import { getApiUrl, getWsMessage } from "@/utils/address";
+import { getApiUrl, getWsMessagePath, getWsMessageUrl } from "@/utils/address";
 
-let socket = io(getWsMessage(), {
+let socket = io(getWsMessageUrl(), {
   query: {
-    token: localStorage.getItem("token"),
-  }
+    token: "",
+  },
+  path: getWsMessagePath()
 });
 
 export default function Conversation() {
@@ -29,10 +30,11 @@ export default function Conversation() {
   const scrollAreaRef = useRef(null); // Ref pour la ScrollArea
 
   useEffect(() => {
-    socket = io(getWsMessage(), {
+    socket = io(getWsMessageUrl(), {
       query: {
         token: localStorage.getItem("token"),
-      }
+      },
+      path: getWsMessagePath()
     });
     const fetchConversation = async () => {
       try {

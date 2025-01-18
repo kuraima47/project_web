@@ -82,6 +82,7 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       })
+
       if (response.ok) {
         const data = await response.json()
         setLikes(data.likes)

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { io } from "socket.io-client";
 import { useRouter } from "next/navigation";
-import { getApiUrl, getWsMessage } from "@/utils/address";
+import { getApiUrl, getWsMessagePath, getWsMessageUrl } from "@/utils/address";
 
 
 import UserSearchInput from "@/components/UserSearchInput"; // <-- L'import du composant
@@ -26,8 +26,9 @@ export default function Messages() {
 
   useEffect(() => {
     // Connexion Socket.io
-    const socket = io(getWsMessage(), {
+    const socket = io(getWsMessageUrl(), {
       query: { token: localStorage.getItem("token") },
+      path: getWsMessagePath()
     });
     // Le serveur écoute l'événement "listenMyRooms" pour
     // inscrire ce client dans toutes ses "rooms" (conversations).
