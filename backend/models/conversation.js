@@ -19,11 +19,6 @@ const Conversation = sequelize.define('Conversation', {
       model: User,
       key: 'id',
     },
-  seen: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false
-  }
   },
 }, {
   tableName: 'Conversations',

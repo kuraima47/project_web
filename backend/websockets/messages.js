@@ -135,6 +135,7 @@ module.exports = (io) => {
     //    (Dans ta page /messages/[id], tu fais socket.emit("joinRoom", conversationId))
     socket.on('joinRoom', async (roomId) => {
       const hasAccess = await checkConversationAccess(socket, roomId);
+      io.to(roomId).emit("refresh");
       if (!hasAccess) return;
     });
 
@@ -149,7 +150,8 @@ module.exports = (io) => {
       // if (roomId < 0 && !handleMessageCooldown(socket, message)) return;
 
       // Si tu veux l'appliquer sur toutes les conversations, supprime la condition :
-      if (!handleMessageCooldown(socket, message)) return;
+      if(roomId == -1)
+        if (!handleMessageCooldown(socket, message)) return;
 
       console.log(`Message reçu pour la salle ${roomId}:`, message);
 
