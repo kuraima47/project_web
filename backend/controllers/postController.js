@@ -2,6 +2,8 @@
 
 const Post = require('../models/post');
 const User = require('../models/user');
+const Interest = require('../models/interest');
+const UserInterest = require('../models/userInterest');
 const Repost = require('../models/repost');
 const Hashtag = require('../models/hashtag');
 const { createNotification } = require('../services/notificationService');
@@ -170,6 +172,40 @@ exports.likePost = async (req, res) => {
       res.json({ message: 'Post unliked successfully', likes: post.likes, liked:false });
     } else {
       await post.addLikedBy(req.user);
+
+      const hashtags = await post.getHashtags();  // => ex: [ { name: 'blockchain' }, ... ]
+
+      // 4) Pour chaque hashtag, faire un findOrCreate dans Interests,
+      //    puis incrémenter le score de l'utilisateur dans UserInterest
+      for (const hashtag of hashtags) {
+        const interestName = hashtag.name.toLowerCase();
+        const [interest] = await Interest.findOrCreate({
+          where: { name: interestName },
+          defaults: { name: interestName }
+        });
+  
+        // Vérifier si on a déjà une entrée (userId, interestId)
+        let userInterest = await UserInterest.findOne({
+          where: {
+            userId: req.user.id,
+            interestId: interest.id
+          }
+        });
+  
+        if (!userInterest) {
+          // Pas encore d'entrée -> on crée avec un score de base
+          userInterest = await UserInterest.create({
+            userId: req.user.id,
+            interestId: interest.id,
+            score: 1 // Première interaction
+          });
+        } else {
+          // On incrémente le score existant
+          userInterest.score += 1;
+          await userInterest.save();
+        }
+      }
+
       post.likes += 1;
       await post.save();
       await createNotification('like',post.authorId,req.user.id,post.id);

@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import UserSearchInput from "@/components/UserSearchInput"; // <-- L'import du composant
 
 export default function Messages() {
+  const [conversationId] = useState(0);
   const [conversations, setConversations] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [newMessageUser, setNewMessageUser] = useState("");
@@ -29,7 +30,7 @@ export default function Messages() {
     });
     // Le serveur écoute l'événement "listenMyRooms" pour
     // inscrire ce client dans toutes ses "rooms" (conversations).
-    socket.emit("listenMyRooms");
+    socket.emit("listenMyRooms", conversationId);
 
     const fetchData = async () => {
       try {
@@ -98,7 +99,7 @@ export default function Messages() {
       socket.off("receiveMessage");
       socket.disconnect();
     };
-  }, [router]);
+  }, [router, conversationId]);
 
   const handleNewConversation = async () => {
     try {
