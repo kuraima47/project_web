@@ -359,5 +359,6 @@ exports.createPost = async (req, res) => {
     console.error('Error creating post:', error);
     res.status(500).json({ error: 'Failed to create post' });
   }
+
 };
 
