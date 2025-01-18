@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,6 +47,31 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
   const [isReposted, setIsReposted] = useState(false) // État pour la gestion de repost
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const relativeTime = formatRelativeTime(new Date(createdAt))
+
+
+  useEffect(() => {
+    initLikeRepostComment();
+  })
+
+  const initLikeRepostComment = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/posts/infos/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setLiked(data.isLiked)
+        setIsReposted(data.isReposted != null)
+      } else {
+        throw new Error('Failed to like post')
+      }
+    } catch(error) {
+      console.error('Error fetch infos', error)
+    }
+  }
+
 
   const handleLike = async () => {
     try {

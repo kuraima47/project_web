@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PostCard } from "@/components/post-card";
 import { useAuth } from "@/contexts/auth-context";
 import { EditProfileModal } from "@/components/edit-profile-modal";
+import { Repeat2 } from 'lucide-react'
 
 export default function UserProfile() {
   const { address } = useParams();
@@ -247,7 +248,18 @@ export default function UserProfile() {
         {posts.length === 0 ? (
           <div>Aucun post trouvé.</div>
         ) : (
-          posts.map((post) => <PostCard key={post.id} {...post} onUpdate={fetchUserPosts} />)
+          posts.map((post) => (
+            <div key={post.id} className="relative">
+              {/* Badge "Repost" if post is a repost */}
+              {post.authorId != user.id && (
+                <div className="absolute top-2 right-2 p-2 m-1 bg-emerald-600 dark:bg-gray-700 text-white dark:text-gray-200 text-xs rounded-full flex items-center space-x-1">
+                  <span className="font-bold">RT</span>
+                  <Repeat2 className="mr-2 h-4 w-4 transition-colors duration-300 text-green-100" />
+                </div>
+              )}
+              <PostCard key={post.id} {...post} onUpdate={fetchUserPosts} />
+            </div>
+          ))
         )}
       </div>
 
@@ -267,12 +279,12 @@ export default function UserProfile() {
 
       {/* Popup for followers */}
       {isFollowersOpen && (
-        <Popup title="Abonnés" users={followers} onClose={closePopup} />
+        <Popup title="Abonnés" users={followers} onClose={() => setIsFollowersOpen(false)} />
       )}
 
       {/* Popup for following */}
       {isFollowingOpen && (
-        <Popup title="Abonnements" users={following} onClose={closePopup} />
+        <Popup title="Abonnements" users={following} onClose={() => setIsFollowingOpen(false)} />
       )}
     </div>
   );
@@ -297,14 +309,9 @@ function Popup({ title, users, onClose }) {
                 <li key={user.id} className="flex items-center space-x-2">
                   <Avatar className="w-8 h-8">
                     <AvatarImage src={user.avatar} alt={user.username || user.address} />
-                    <AvatarFallback>
-                      {user.username ? user.username[0].toUpperCase() : user.address.slice(0, 2)}
-                    </AvatarFallback>
+                    <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="font-semibold">{user.username}</p>
-                    <p className="text-sm text-muted-foreground">{user.username || user.address}</p>
-                  </div>
+                  <span>{user.username || user.address}</span>
                 </li>
               ))}
             </ul>
