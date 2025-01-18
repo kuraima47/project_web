@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Search, MessageSquare, Bell, User, Swords, Bitcoin } from 'lucide-react'
+import { Home, Search, MessageSquare, Bell, User, Swords,Flame, Bitcoin, LogInIcon } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { useNotification } from "@/contexts/notification-context";
@@ -11,7 +11,7 @@ export function BottomNav() {
   const router = useRouter()
     const { unreadCount } = useNotification();
 
-  const navItems = [
+  let navItems = [
     { href: '/', icon: Home, label: 'Accueil' },
     { href: '/search', icon: Search, label: 'Recherche' },
     { href: '/messages', icon: MessageSquare, label: 'Messages' },
@@ -21,10 +21,15 @@ export function BottomNav() {
       label: "Notifications",
       badge: unreadCount,
     },
-    { href: '/anarchie', icon: Swords, label: 'Anarchie' },
+    { href: '/anarchie', icon: Flame, label: 'Anarchie' },
+    { href: "/pixelWar", icon: Swords, label: "Pixel War" },
     { href: '/cryptos', icon: Bitcoin, label: 'Cryptos' },
     { href: user ? `/users/${user.address}` : '/login', icon: User, label: 'Profil' },
   ]
+
+  if(!user) {
+    navItems = [{ href: '/login', icon: LogInIcon, label: 'Connexion' }]
+  }
   
   const handleNavigation = (href: string) => {
     router.push(href)
