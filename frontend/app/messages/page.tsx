@@ -31,6 +31,10 @@ export default function Messages() {
     // inscrire ce client dans toutes ses "rooms" (conversations).
     socket.emit("listenMyRooms");
 
+    socket.on("receiveNewConversation", () => {
+      fetchData();
+    });
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -57,7 +61,7 @@ export default function Messages() {
         }));
 
         setConversations(initialConversations);
-        // setPendingRequests(data.pendingRequests || []);
+        setPendingRequests(data.pendingRequests || []);
       } catch (err: any) {
         setError(err.message || "Erreur inattendue");
       } finally {
@@ -102,6 +106,9 @@ export default function Messages() {
 
   const handleNewConversation = async () => {
     try {
+      const socket = io("http://localhost:3001", {
+        query: { token: localStorage.getItem("token") },
+      });
       const response = await fetch("http://localhost:3001/api/messages", {
         method: "POST",
         headers: {
@@ -126,7 +133,7 @@ export default function Messages() {
       } else if (user.isFollowing) {
         setPendingRequests((prev) => [...prev, user]);
       }
-
+      socket.emit("newConversation", user.id);
       setNewMessageUser("");
       setNewMessageContent("");
     } catch (err: any) {
