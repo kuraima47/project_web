@@ -25,6 +25,7 @@ const userSocketMap = new Map();
 // Exporter la logique pour gérer les notifications
 module.exports = (io) => {
   io.on('connection', (socket) => {
+    console.log("tentative de connexion websocket notif....");
     const token = socket.handshake.query.token;
     const decoded = verifyToken(socket, token);
     if (!decoded) {

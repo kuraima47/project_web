@@ -3,16 +3,20 @@
 import { useEffect } from "react";
 import { io } from "socket.io-client";
 import { useNotification } from "@/contexts/notification-context";
+import { getWsNotificationsUrl, getWsNotificationsPath } from "@/utils/address";
 
 export function ToastNotification() {
   const { notify } = useNotification();
 
   useEffect(() => {
     // Connexion WebSocket avec le token utilisateur
-    const socket = io("http://localhost:3002", {
-      query: {
-        token: localStorage.getItem("token"),
+
+    console.log(getWsNotificationsUrl+"   "+getWsNotificationsPath())
+    const socket = io(getWsNotificationsUrl(), {
+      query : { 
+        token: localStorage.getItem("token") 
       },
+      path: getWsNotificationsPath()
     });
 
     // Recevoir les notifications en temps réel via WebSocket

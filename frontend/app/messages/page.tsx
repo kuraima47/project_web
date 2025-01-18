@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { io } from "socket.io-client";
 import { useRouter } from "next/navigation";
+import { getApiUrl, getWsMessagePath, getWsMessageUrl } from "@/utils/address";
+
 import UserSearchInput from "@/components/UserSearchInput"; // <-- L'import du composant
 
 export default function Messages() {
@@ -24,8 +26,9 @@ export default function Messages() {
 
   useEffect(() => {
     // Connexion Socket.io
-    const socket = io("http://localhost:3001", {
+    const socket = io(getWsMessageUrl(), {
       query: { token: localStorage.getItem("token") },
+      path: getWsMessagePath()
     });
 
     socket.emit("listenMyRooms");
@@ -37,7 +40,7 @@ export default function Messages() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:3001/api/messages", {
+        const response = await fetch(getApiUrl("/api/messages"), {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -96,11 +99,13 @@ export default function Messages() {
 
   const handleNewConversation = async () => {
     try {
-      const socket = io("http://localhost:3001", {
+
+      const socket = io(getWsMessageUrl(), {
         query: { token: localStorage.getItem("token") },
+        path: getWsMessagePath()
       });
 
-      const response = await fetch("http://localhost:3001/api/messages", {
+      const response = await fetch(getApiUrl("/api/messages"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -124,6 +129,7 @@ export default function Messages() {
         setPendingRequests((prev) => [...prev, user]);
       }
       socket.emit("newConversation", user.id);
+
       setNewMessageUser("");
       setNewMessageContent("");
     } catch (err: any) {
@@ -134,11 +140,11 @@ export default function Messages() {
   const handleAcceptRequest = async (requestUserId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/messages/${requestUserId}/accept`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+          getApiUrl(`/api/messages/${requestUserId}/accept`),
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          }
       );
       if (!response.ok) throw new Error("Erreur lors de l'acceptation de la demande");
 
@@ -156,7 +162,7 @@ export default function Messages() {
     try {
       // Envoi de la requête pour marquer tous les messages de la conversation comme vus
       const response = await fetch(
-        `http://localhost:3001/api/messages/${conversationId}/markAsSeen`,
+        getApiUrl(`/api/messages/${conversationId}/markAsSeen`),
         {
           method: "POST",
           headers: {
