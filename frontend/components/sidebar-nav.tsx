@@ -1,4 +1,4 @@
-import { Home, Search, MessageSquare, Bell, User, Settings, Swords, Bitcoin, LogInIcon } from "lucide-react";
+import { Home, Search, MessageSquare, Bell, User, Settings, Swords, Flame, Bitcoin, LogInIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -20,7 +20,8 @@ export function SidebarNav() {
       label: "Notifications",
       badge: unreadCount,
     },
-    { href: "/anarchie", icon: Swords, label: "Anarchie" },
+    { href: "/anarchie", icon: Flame, label: "Anarchie" },
+    { href: "/pixelWar", icon: Swords, label: "Pixel War" },
     { href: user ? `/users/${user.address}` : "/login", icon: User, label: "Mon Profil" },
     { href: "/cryptos", icon: Bitcoin, label: "Cryptos" },
     { href: "/settings", icon: Settings, label: "Paramètres" },

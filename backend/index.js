@@ -12,6 +12,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const cryptoRoutes = require('./routes/cryptoRoutes');
+const pixelWarRoutes = require('./routes/pixelWarRoutes');
 
 // Import des modèles
 const User = require('./models/user');
@@ -25,12 +26,12 @@ const port = process.env.PORT || 3001;
 
 
 // Sockets
-const { initSockets, getIoMessages, getIoNotifications } = require('./socket');
-const {server, notificationServer} = initSockets(app);
+const { initSockets, getIoMessages, getIoNotifications, getIoPixelWar } = require('./socket');
+const {server, notificationServer, pixelwarServer} = initSockets(app);
 
 require('./websockets/messages.js')(getIoMessages()); // WebSocket pour les messages privés
 require('./websockets/notifications.js')(getIoNotifications());
-
+require('./websockets/pixelwar.js')(getIoPixelWar());
 
 // Configuration CORS
 app.use(cors({
@@ -49,6 +50,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/pixels', pixelWarRoutes);
 
 // Sync des modèles et démarrage du serveur
 sequelize.sync({ alter: true }).then(() => {
@@ -59,4 +61,8 @@ sequelize.sync({ alter: true }).then(() => {
   notificationServer.listen(port+1, () => {
     console.log(`Notification WebSocket server running on port 3002`);
   });
+
+  pixelwarServer.listen(port+2, () => {
+    console.log(`PixelWar WebSocket server running on port 3003`);
+  })
 });

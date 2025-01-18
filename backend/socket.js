@@ -3,6 +3,7 @@ const { Server } = require('socket.io');
 const http = require('http'); // Pour créer un serveur HTTP
 let ioMessages; // Déclaration de io mais non initialisé
 let ioNotifications;
+let ioPixelWar;
 
 function initSockets(app) {
     const server = http.createServer(app);
@@ -22,7 +23,16 @@ function initSockets(app) {
             credentials: true,
         },
     });
-    return {server, notificationServer};
+
+    const pixelwarServer = http.createServer(app);
+    ioPixelWar = new Server(pixelwarServer, {
+        cors: {
+            origin: 'http://localhost:3000',
+            methods: ['GET', 'POST'],
+            credentials: true,
+        },
+    });
+    return {server, notificationServer, pixelwarServer};
 }
 
 // Fonction pour récupérer l'instance io
@@ -31,6 +41,13 @@ function getIoMessages() {
     throw new Error('Socket.io is not initialized');
   }
   return ioMessages;
+}
+
+function getIoPixelWar() {
+  if (!ioPixelWar) {
+    throw new Error('Socket.io is not initialized');
+  }
+  return ioPixelWar;
 }
 
 function getIoNotifications() {
@@ -43,5 +60,6 @@ function getIoNotifications() {
 module.exports = {
   initSockets,
   getIoMessages,
+  getIoPixelWar,
   getIoNotifications
 };
