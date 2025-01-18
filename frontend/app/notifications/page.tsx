@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Bell, Heart, MessageCircle, Repeat2, UserPlus, UserMinus } from 'lucide-react'
-import Link from 'next/link'
 
 interface Notification {
     id: string
