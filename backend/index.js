@@ -12,14 +12,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const cryptoRoutes = require('./routes/cryptoRoutes');
-
-// Import des modèles
-const User = require('./models/user');
-const UserFollows = require('./models/userFollow');
-const Post = require('./models/post');
-const Comment = require('./models/comment');
-const Notification = require('./models/notification');
-const Hashtag = require('./models/hashtag');
+const feedRoutes = require('./routes/feedRoutes');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -50,6 +43,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/feed', feedRoutes);
 
 // Sync des modèles et démarrage du serveur
 sequelize.sync({ alter: true }).then(() => {

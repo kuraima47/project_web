@@ -2,6 +2,8 @@
 
 const Post = require('../models/post');
 const User = require('../models/user');
+const Interest = require('../models/interest');
+const UserInterest = require('../models/userInterest');
 const Comment = require('../models/comment');
 const Hashtag = require('../models/hashtag');
 const { createNotification } = require('../services/notificationService');
@@ -123,13 +125,49 @@ exports.likePost = async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
+    // 1) Marquer le like
     await post.addLikedBy(req.user);
     post.likes += 1;
     await post.save();
 
-    await createNotification('like',post.authorId,req.user.id,post.id);
+    // 2) Notification
+    await createNotification('like', post.authorId, req.user.id, post.id);
 
-    res.json({ message: 'Post liked successfully', likes: post.likes });
+    // 3) Récupérer les hashtags liés au post
+    const hashtags = await post.getHashtags();  // => ex: [ { name: 'blockchain' }, ... ]
+
+    // 4) Pour chaque hashtag, faire un findOrCreate dans Interests,
+    //    puis incrémenter le score de l'utilisateur dans UserInterest
+    for (const hashtag of hashtags) {
+      const interestName = hashtag.name.toLowerCase();
+      const [interest] = await Interest.findOrCreate({
+        where: { name: interestName },
+        defaults: { name: interestName }
+      });
+
+      // Vérifier si on a déjà une entrée (userId, interestId)
+      let userInterest = await UserInterest.findOne({
+        where: {
+          userId: req.user.id,
+          interestId: interest.id
+        }
+      });
+
+      if (!userInterest) {
+        // Pas encore d'entrée -> on crée avec un score de base
+        userInterest = await UserInterest.create({
+          userId: req.user.id,
+          interestId: interest.id,
+          score: 1 // Première interaction
+        });
+      } else {
+        // On incrémente le score existant
+        userInterest.score += 1;
+        await userInterest.save();
+      }
+    }
+
+    return res.json({ message: 'Post liked successfully', likes: post.likes });
   } catch (error) {
     console.error('Failed to like post:', error);
     res.status(500).json({ error: 'Failed to like post' });
