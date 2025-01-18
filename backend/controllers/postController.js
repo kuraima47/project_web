@@ -2,6 +2,8 @@
 
 const Post = require('../models/post');
 const User = require('../models/user');
+const Interest = require('../models/interest');
+const UserInterest = require('../models/userInterest');
 const Repost = require('../models/repost');
 const Hashtag = require('../models/hashtag');
 const { createNotification } = require('../services/notificationService');
@@ -45,7 +47,7 @@ exports.getUserPosts = async (req, res) => {
 
   try {
 
-    
+
     const userToCheck = await User.findOne({where: { address: address }})
 
     if(!userToCheck)
@@ -173,6 +175,41 @@ exports.likePost = async (req, res) => {
       post.likes += 1;
       await post.save();
       await createNotification('like',post.authorId,req.user.id,post.id);
+
+        // 3) Récupérer les hashtags liés au post
+        const hashtags = await post.getHashtags();  // => ex: [ { name: 'blockchain' }, ... ]
+
+        // 4) Pour chaque hashtag, faire un findOrCreate dans Interests,
+        //    puis incrémenter le score de l'utilisateur dans UserInterest
+        for (const hashtag of hashtags) {
+            const interestName = hashtag.name.toLowerCase();
+            const [interest] = await Interest.findOrCreate({
+                where: { name: interestName },
+                defaults: { name: interestName }
+            });
+
+            // Vérifier si on a déjà une entrée (userId, interestId)
+            let userInterest = await UserInterest.findOne({
+                where: {
+                    userId: req.user.id,
+                    interestId: interest.id
+                }
+            });
+
+            if (!userInterest) {
+                // Pas encore d'entrée -> on crée avec un score de base
+                userInterest = await UserInterest.create({
+                    userId: req.user.id,
+                    interestId: interest.id,
+                    score: 1 // Première interaction
+                });
+            } else {
+                // On incrémente le score existant
+                userInterest.score += 1;
+                await userInterest.save();
+            }
+        }
+
       res.json({ message: 'Post liked successfully', likes: post.likes, liked: true });
     }
   } catch (error) {
@@ -225,7 +262,7 @@ exports.getPostInfos =  async (req, res) => {
     const isReposted = await Repost.findOne({
       where: {
         postId: id,
-        userId: req.user.id, 
+        userId: req.user.id,
       },
     });
 
@@ -322,5 +359,6 @@ exports.createPost = async (req, res) => {
     console.error('Error creating post:', error);
     res.status(500).json({ error: 'Failed to create post' });
   }
+
 };
 
