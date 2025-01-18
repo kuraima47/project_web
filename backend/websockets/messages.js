@@ -169,7 +169,19 @@ module.exports = (io) => {
      */
     socket.on('newConversation', async (conversationData) => {
       try {
-        io.emit('receiveNewConversation', conversationData);
+        // Exemple: on crée la conversation en base
+        // conversationData = { senderId, receiverId, ... }
+        const newConv = await Conversation.create(conversationData);
+
+        // On met éventuellement l'utilisateur dans la room
+        socket.join(newConv.id);
+
+        // Puis on informe le client qu'une nouvelle conversation est créée
+        // (soit seulement l'utilisateur, soit tous tes sockets, etc.)
+        // Ici, je l'envoie à l'utilisateur courant, mais tu peux faire un "io.emit"
+        // si tu veux que tous les utilisateurs voient la nouvelle conversation.
+        socket.emit('receiveNewConversation', newConv);
+        console.log('Nouvelle conversation créée : ', newConv.id);
       } catch (error) {
         console.error('Erreur création conversation:', error);
         socket.emit('receiveMessageError', {

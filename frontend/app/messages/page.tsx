@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import UserSearchInput from "@/components/UserSearchInput"; // <-- L'import du composant
 
 export default function Messages() {
+  const [conversationId] = useState(0);
   const [conversations, setConversations] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [newMessageUser, setNewMessageUser] = useState("");
@@ -26,8 +27,14 @@ export default function Messages() {
     const socket = io("http://localhost:3001", {
       query: { token: localStorage.getItem("token") },
     });
+<<<<<<< HEAD
 
     socket.emit("listenMyRooms");
+=======
+    // Le serveur écoute l'événement "listenMyRooms" pour
+    // inscrire ce client dans toutes ses "rooms" (conversations).
+    socket.emit("listenMyRooms", conversationId);
+>>>>>>> 0ea5200c7dc1112dbf83fedcf7d6418dbde8f0db
 
     socket.on("receiveNewConversation", () => {
       fetchData();
@@ -91,7 +98,7 @@ export default function Messages() {
       socket.off("receiveMessage");
       socket.disconnect();
     };
-  }, [router]);
+  }, [router, conversationId]);
 
   const handleNewConversation = async () => {
     try {
