@@ -1,5 +1,5 @@
 # Dockerfile pour Express (Backend)
-FROM node:18
+FROM node:20.18.0
 
 # Créer un répertoire de travail pour l'application
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY ./package*.json ./
 
 # Installer les dépendances
-RUN npm install
+RUN npm ci
 
 # Copier tout le reste du code source de l'application
 COPY . .

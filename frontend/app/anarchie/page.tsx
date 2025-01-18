@@ -11,9 +11,10 @@ import Link from 'next/link'
 
 let socket = io("http://localhost:3001", {
   query: {
-    token: localStorage.getItem("token"), // Le token pour l'authentification, mais pas nécessaire pour la room -1
+    token: "", // Le token pour l'authentification, mais pas nécessaire pour la room -1
   }
-});
+});;
+
 
 export default function Anarchie() {
   const [newMessage, setNewMessage] = useState("");
@@ -27,6 +28,11 @@ export default function Anarchie() {
 
   // Écouter les messages reçus en temps réel
   useEffect(() => {
+    socket = io("http://localhost:3001", {
+      query: {
+        token: localStorage.getItem("token"), // Le token pour l'authentification, mais pas nécessaire pour la room -1
+      }
+    });
     const fetchConversation = async () => {
       const response = await fetch(`http://localhost:3001/api/users/fromToken/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
