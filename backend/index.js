@@ -20,6 +20,7 @@ const UserFollows = require('./models/userFollow');
 const Post = require('./models/post');
 const Notification = require('./models/notification');
 const Hashtag = require('./models/hashtag');
+const feedRoutes = require('./routes/feedRoutes');
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/pixels', pixelWarRoutes);
+app.use('/api/feed', feedRoutes);
 
 // Sync des modèles et démarrage du serveur
 sequelize.sync({ alter: true }).then(() => {

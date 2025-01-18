@@ -3,6 +3,8 @@
 const { ethers } = require('ethers');
 const User = require('../models/user');
 const Notification = require('../models/notification');
+const Interest = require('../models/Interest');
+const UserInterest = require('../models/UserInterest')
 const UserFollows = require('../models/userFollow');
 const jwt = require('jsonwebtoken');
 const { createNotification } = require('../services/notificationService');
@@ -88,14 +90,22 @@ exports.getProfile = async (req, res) => {
   const { address } = req.params;
   try {
     const user = await User.findOne({
-      where: { address: address.toLowerCase() }
+      where: { address: address.toLowerCase() },
+      include: [{
+        model: Interest,
+        as: 'interests',
+        // On veut aussi le score dans la table pivot => "UserInterest"
+        through: {
+          attributes: ['score']
+        }
+      }]
     });
-    
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // user.interests[i].UserInterest.score => accès au champ score dans la jonction
     return res.json(user);
   } catch (error) {
     console.error('Error in getProfile:', error);
@@ -139,26 +149,54 @@ exports.updateProfile = async (req, res) => {
  */
 exports.followUser = async (req, res) => {
   try {
-    // ID de l'utilisateur qu'on veut suivre
     const addressToFollow = req.params.address;
 
-    // Vérification si c’est pas soi-même
     if (addressToFollow === req.user.address) {
       return res.status(400).json({ error: 'Cannot follow yourself' });
     }
 
-    // Vérifier que l'utilisateur à suivre existe
     const userToFollow = await User.findOne({
       where: { address: addressToFollow },
-    });;
+    });
     if (!userToFollow) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Ajouter la relation
+    // 1) Effectuer le follow
     await req.user.addFollowing(userToFollow);
+    await createNotification('follow', userToFollow.id, req.user.id);
 
-    await createNotification('follow',userToFollow.id,req.user.id);
+    // 2) Extraire un "thème" ou "hashtag" de la bio, par exemple
+    const userBio = userToFollow.bio || '';
+    const bioHashtags = userBio.match(/#\w+/g) || [];
+
+    // 3) Incrémenter le score
+    for (let tag of bioHashtags) {
+      tag = tag.slice(1).toLowerCase();  // remove '#'
+
+      const [interest] = await Interest.findOrCreate({
+        where: { name: tag },
+        defaults: { name: tag }
+      });
+
+      let userInterest = await UserInterest.findOne({
+        where: {
+          userId: req.user.id,
+          interestId: interest.id
+        }
+      });
+
+      if (!userInterest) {
+        await UserInterest.create({
+          userId: req.user.id,
+          interestId: interest.id,
+          score: 1 // ou 2, si tu veux que follow "pèse" plus qu'un like
+        });
+      } else {
+        userInterest.score += 1; // ou += 2
+        await userInterest.save();
+      }
+    }
 
     return res.json({ message: 'Followed successfully' });
   } catch (error) {

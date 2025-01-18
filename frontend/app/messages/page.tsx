@@ -11,10 +11,10 @@ import { io } from "socket.io-client";
 import { useRouter } from "next/navigation";
 import { getApiUrl, getWsMessagePath, getWsMessageUrl } from "@/utils/address";
 
-
 import UserSearchInput from "@/components/UserSearchInput"; // <-- L'import du composant
 
 export default function Messages() {
+  const [conversationId] = useState(0);
   const [conversations, setConversations] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [newMessageUser, setNewMessageUser] = useState("");
@@ -30,9 +30,12 @@ export default function Messages() {
       query: { token: localStorage.getItem("token") },
       path: getWsMessagePath()
     });
-    // Le serveur écoute l'événement "listenMyRooms" pour
-    // inscrire ce client dans toutes ses "rooms" (conversations).
+
     socket.emit("listenMyRooms");
+
+    socket.on("receiveNewConversation", () => {
+      fetchData();
+    });
 
     const fetchData = async () => {
       try {
@@ -43,7 +46,6 @@ export default function Messages() {
           },
         });
         if (!response.ok) {
-          // Si pas OK, on redirige vers la home (ou une page de login)
           router.push("/");
           throw new Error("Erreur lors du chargement des données");
         }
@@ -51,16 +53,13 @@ export default function Messages() {
         const data = await response.json();
         setUserId(data.userId);
 
-        // On initialise nos conversations avec les données du serveur.
-        // On peut ajouter `unread: false` à l'initialisation
-        // si tu veux être sûr que par défaut elles soient marquées comme lues.
         const initialConversations = (data.conversations || []).map((conv: any) => ({
           ...conv,
-          unread: false, // ou true si tu veux un autre comportement par défaut
+          unread: conv.seenStatus[0].userId === data.userId ? conv.seenStatus[0].seen === false : conv.seenStatus[1].seen === false,
         }));
 
         setConversations(initialConversations);
-        // setPendingRequests(data.pendingRequests || []);
+        setPendingRequests(data.pendingRequests || []);
       } catch (err: any) {
         setError(err.message || "Erreur inattendue");
       } finally {
@@ -70,9 +69,7 @@ export default function Messages() {
 
     fetchData();
 
-    // Écoute des nouveaux messages en temps réel
     socket.on("receiveMessage", (messageData) => {
-      // Quand on reçoit un nouveau message, on met à jour la conversation correspondante
       setConversations((prev) => {
         const updatedConversations = prev.map((conversation: any) => {
           if (conversation.conversationId === messageData.conversationId) {
@@ -80,17 +77,14 @@ export default function Messages() {
               ...conversation,
               lastMessage: messageData.content,
               timestamp: new Date(messageData.createdAt),
-              // On marque la conversation comme "non lue"
-              unread: true,
+              unread: true, // Marquer la conversation comme non lue
             };
           }
           return conversation;
         });
 
-        // Trie les conversations par date de dernier message (le plus récent en premier)
         updatedConversations.sort(
-            (a: any, b: any) =>
-                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          (a: any, b: any) => new Date(b.timestamp) - new Date(a.timestamp)
         );
 
         return updatedConversations;
@@ -101,10 +95,16 @@ export default function Messages() {
       socket.off("receiveMessage");
       socket.disconnect();
     };
-  }, [router]);
+  }, [router, conversationId]);
 
   const handleNewConversation = async () => {
     try {
+
+      const socket = io(getWsMessageUrl(), {
+        query: { token: localStorage.getItem("token") },
+        path: getWsMessagePath()
+      });
+
       const response = await fetch(getApiUrl("/api/messages"), {
         method: "POST",
         headers: {
@@ -116,19 +116,19 @@ export default function Messages() {
           content: newMessageContent,
         }),
       });
+
       if (!response.ok) {
         throw new Error("Erreur lors de l'ajout de la conversation");
       }
 
       const user = await response.json();
 
-      // Selon ta logique, le serveur peut renvoyer si c'est un follower/following
-      // On l'ajoute simplement à la liste des conversations
       if (user.isFollower) {
         setConversations((prev) => [...prev, user]);
       } else if (user.isFollowing) {
         setPendingRequests((prev) => [...prev, user]);
       }
+      socket.emit("newConversation", user.id);
 
       setNewMessageUser("");
       setNewMessageContent("");
@@ -158,103 +158,132 @@ export default function Messages() {
     }
   };
 
+  const handleConversationClick = async (conversationId: string) => {
+    try {
+      // Envoi de la requête pour marquer tous les messages de la conversation comme vus
+      const response = await fetch(
+        getApiUrl(`/api/messages/${conversationId}/markAsSeen`),
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Erreur lors du marquage des messages comme vus");
+      }
+
+      // Mise à jour de l'état local pour marquer les messages comme vus
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.conversationId === conversationId
+            ? { ...conversation, unread: false }
+            : conversation
+        )
+      );
+    } catch (err: any) {
+      setError(err.message || "Erreur inattendue");
+    }
+  };
+
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>{error}</p>;
 
   return (
-      <div className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-semibold mb-6">Messages</h2>
+    <div className="container mx-auto px-4 py-8">
+      <h2 className="text-2xl font-semibold mb-6">Messages</h2>
 
-        <div className="space-y-4">
-          {conversations.map((conversation: any) => {
-            const { users, lastMessage, timestamp, conversationId, unread } = conversation;
-            const [user1, user2] = users;
-            const userToDisplay = user1.id === userId ? user2 : user1;
+      <div className="space-y-4">
+        {conversations.map((conversation: any) => {
+          const { users, lastMessage, timestamp, conversationId, unread } = conversation;
+          const [user1, user2] = users;
+          const userToDisplay = user1.id === userId ? user2 : user1;
 
-            return (
-                <Link href={`/messages/${conversationId}`} key={conversationId}>
-                  <Card className="cursor-pointer hover:bg-accent transition-colors mb-4">
-                    <CardContent className="p-4 flex items-center space-x-4">
-                      <Link href={`/users/${userToDisplay.address}`}>
-                        <Avatar className="mr-2 hover:cursor-pointer hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 transition-all duration-500">
-                          <AvatarImage
-                              src={userToDisplay.avatar}
-                              alt={userToDisplay.username}
-                          />
-                          <AvatarFallback>
-                            {userToDisplay.username.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </Link>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">@{userToDisplay.username}</h3>
-                        <p className="text-sm text-muted-foreground">{lastMessage}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {timestamp && new Date(timestamp).toLocaleString()}
-                        </p>
-                      </div>
+          return (
+            <Link href={`/messages/${conversationId}`} key={conversationId}>
+              <Card
+                className="cursor-pointer hover:bg-accent transition-colors mb-4"
+                onClick={() => handleConversationClick(conversationId)} // Mettre à jour l'état de "vu"
+              >
+                <CardContent className="p-4 flex items-center space-x-4">
+                  <Link href={`/users/${userToDisplay.address}`}>
+                    <Avatar className="mr-2 hover:cursor-pointer hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 transition-all duration-500">
+                      <AvatarImage
+                        src={userToDisplay.avatar}
+                        alt={userToDisplay.username}
+                      />
+                      <AvatarFallback>
+                        {userToDisplay.username.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">@{userToDisplay.username}</h3>
+                    <p className="text-sm text-muted-foreground">{lastMessage}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {timestamp && new Date(timestamp).toLocaleString()}
+                    </p>
+                  </div>
 
-                      {/* Icône de message */}
-                      <MessageSquare className="text-muted-foreground" />
+                  <MessageSquare className="text-muted-foreground" />
 
-                      {/* Badge "NEW" si la conversation a un message non lu */}
-                      {unread && (
-                          <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold ml-2">
-                      NEW
+                  {unread && (
+                    <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold ml-2">
+                      NOUVEAU
                     </span>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-            );
-          })}
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
 
-          {pendingRequests.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Demandes de message en attente</h3>
-                {pendingRequests.map((request: any) => (
-                    <Card key={request.id}>
-                      <CardContent className="p-4 flex items-center space-x-4">
-                        <Avatar>
-                          <AvatarImage src={request.avatar} alt={request.username} />
-                          <AvatarFallback>{request.username[0].toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">@{request.username}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Souhaite vous envoyer un message
-                          </p>
-                        </div>
-                        <Button onClick={() => handleAcceptRequest(request.id)}>
-                          Accepter
-                        </Button>
-                      </CardContent>
-                    </Card>
-                ))}
-              </div>
-          )}
-
-          {/* Nouvelle conversation */}
+        {pendingRequests.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Nouvelle conversation</h3>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              <div className="flex-1">
-                <UserSearchInput onSelectUser={(username) => setNewMessageUser(username)} />
-              </div>
+            <h3 className="text-lg font-semibold mb-2">Demandes de message en attente</h3>
+            {pendingRequests.map((request: any) => (
+              <Card key={request.id}>
+                <CardContent className="p-4 flex items-center space-x-4">
+                  <Avatar>
+                    <AvatarImage src={request.avatar} alt={request.username} />
+                    <AvatarFallback>{request.username[0].toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">@{request.username}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Souhaite vous envoyer un message
+                    </p>
+                  </div>
+                  <Button onClick={() => handleAcceptRequest(request.id)}>
+                    Accepter
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-              <Input
-                  placeholder="Message d'accroche"
-                  value={newMessageContent}
-                  onChange={(e) => setNewMessageContent(e.target.value)}
-                  className="flex-1"
-              />
-              <Button onClick={handleNewConversation}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Démarrer
-              </Button>
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-2">Nouvelle conversation</h3>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            <div className="flex-1">
+              <UserSearchInput onSelectUser={(username) => setNewMessageUser(username)} />
             </div>
+
+            <Input
+              placeholder="Message d'accroche"
+              value={newMessageContent}
+              onChange={(e) => setNewMessageContent(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={handleNewConversation}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Démarrer
+            </Button>
           </div>
         </div>
       </div>
+    </div>
   );
 }

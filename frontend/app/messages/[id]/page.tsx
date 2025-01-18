@@ -26,9 +26,11 @@ export default function Conversation() {
   const [friendUser, setFriendUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [conversationId, setConversationId] = useState(null);
-  
-  const scrollAreaRef = useRef(null); // Ref pour la ScrollArea
+  const [isSeen, setIsSeen] = useState(false);
 
+  const scrollAreaRef = useRef(null);
+
+  // Fetch initial conversation data
   useEffect(() => {
     socket = io(getWsMessageUrl(), {
       query: {
@@ -47,22 +49,21 @@ export default function Conversation() {
         setCurrentUser(data.currentUser);
         setMessages(data.conversation.messages);
         setConversationId(data.conversation.id);
-
-        // Rejoindre la salle WebSocket
+        // Join room after conversationId is set
         socket.emit("joinRoom", data.conversation.id);
       } catch (error) {
         console.error("Error fetching conversation:", error);
         router.push("/messages");
       }
     };
-
     fetchConversation();
 
-    // Écouter les messages reçus en temps réel
-    socket.on("receiveMessage", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+    socket = io(getWsMessageUrl(), {
+      query: {
+        token: localStorage.getItem("token"),
+      },
+      path: getWsMessagePath()
     });
-
     // Cleanup
     return () => {
       socket.off("receiveMessage");
@@ -70,15 +71,67 @@ export default function Conversation() {
     };
   }, [params.id, router]);
 
-  const messagesEndRef = useRef(null)
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-  // Scroll automatique vers le bas lorsque de nouveaux messages sont ajoutés
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages]); // Re-exécuter chaque fois que messages change
+  const checkLastMessageSeen = async () => {
+    const response = await fetch(
+      getApiUrl(`/api/messages/${conversationId}/isLastMessageSeen`),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    const data = await response.json();
+    setIsSeen(data.seen); // Met à jour l'état "isSeen"
+  };
 
+  // Vérifier si le dernier message a été vu
+  useEffect(() => {
+
+
+    if (conversationId) {
+      checkLastMessageSeen();
+    }
+
+    const markAsSeen = async () => {
+      await fetch(
+        getApiUrl(`/api/messages/${conversationId}/markAsSeen`),
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      )
+    }
+
+    socket.on("receiveMessage", async (message) => {
+      await markAsSeen();
+      setMessages((prevMessages) => [...prevMessages, message]);
+      checkLastMessageSeen();
+    });
+
+    socket.on("refresh", async () => {
+      console.log("refresh room");
+      checkLastMessageSeen();
+    })
+
+    return () => {
+      socket.off("receiveMessage");
+    };
+  }, [conversationId]);
+
+
+  // Scroll to the bottom when new messages are added
+  const messagesEndRef = useRef(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Handle sending a new message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim()) {
@@ -104,19 +157,34 @@ export default function Conversation() {
           body: JSON.stringify(newMsg),
         });
 
-        setNewMessage("");
         if (response.ok) {
           socket.emit("sendMessage", { roomId: conversationId, message });
+          checkLastMessageSeen();
           const savedMessage = await response.json();
         } else {
           console.error("Error sending message:", response.statusText);
         }
+        setNewMessage("");
       } catch (error) {
         console.error("Error sending message:", error);
       }
     }
   };
 
+  const renderSeenStatus = (message, index) => {
+    // Vérifiez si c'est le dernier message envoyé par le currentUser
+    const isLastMessage = 
+      index === messages.length - 1 && 
+      message.senderId === currentUser.id;
+
+    console.log(index);
+  
+    // Affichez "Vu" uniquement si c'est le dernier message envoyé
+    return isLastMessage && isSeen ? (
+      <p className="text-xs text-muted-foreground">Vu</p>
+    ) : null;
+  };
+  
   if (!friendUser || !currentUser) return null;
 
   return (
@@ -134,6 +202,7 @@ export default function Conversation() {
         </Link>
         <h2 className="text-2xl font-semibold">Conversation avec {friendUser.username}</h2>
       </div>
+
       <ScrollArea className="flex-grow mb-4 p-4 border rounded-lg">
         <div className="space-y-4">
           {messages.map((message, index) => (
@@ -157,12 +226,14 @@ export default function Conversation() {
                     minute: "2-digit",
                   })}
                 </p>
+                {renderSeenStatus(message, index)} {/* Affichage conditionnel du message "Vu" */}
               </div>
               <div ref={messagesEndRef} />
             </div>
           ))}
         </div>
       </ScrollArea>
+
       <form onSubmit={handleSendMessage} className="flex space-x-2">
         <Input
           placeholder="Écrivez votre message..."
