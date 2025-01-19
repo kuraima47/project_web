@@ -33,14 +33,14 @@ export default function CryptoDetail() {
       try {
         const response = await fetch(getApiUrl(`/api/cryptos/${params.id}`));
         if (!response.ok) {
-          throw new Error('Failed to fetch crypto data');
+          throw new Error('Crypto individuelle non disponible pour le moment. La mise à jour est prévue !');
         }
         const data = await response.json();
         console.log('Fetched data:', data); // Debug log
         setCryptoData(data);
       } catch (error) {
         console.error('Error fetching crypto details:', error);
-        setError('Failed to load crypto data');
+        setError('Crypto individuelle non disponible pour le moment. La mise à jour est prévue !');
       } finally {
         setLoading(false);
       }
