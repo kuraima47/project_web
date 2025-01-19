@@ -9,11 +9,23 @@ services:
       - ./backend:/usr/src/app
     depends_on:
       - redis
+      - postgres
     environment:
-      NODE_ENV: production
+      - DATABASE_URL=postgresql://root:root@postgres:5432/blocktweet_db
+      - NODE_ENV=production
     networks:
       - app_network
-
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: blocktweet_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
   frontend:
     build:
       context: ./frontend

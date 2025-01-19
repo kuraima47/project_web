@@ -49,7 +49,6 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const relativeTime = formatRelativeTime(new Date(createdAt))
 
-
   useEffect(() => {
     initLikeRepostComment();
   })
