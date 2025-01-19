@@ -41,10 +41,10 @@ exports.getAllPosts = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
-    res.json(posts);
+    return res.json(posts);
   } catch (error) {
     console.error('Error fetching posts:', error);
-    res.status(500).json({ error: 'Failed to fetch posts' });
+    return res.status(500).json({ error: 'Failed to fetch posts' });
   }
 };
 
@@ -193,7 +193,7 @@ exports.likePost = async (req, res) => {
       await post.removeLikedBy(req.user);
       post.likes -= 1;
       await post.save();
-      res.json({ message: 'Post unliked successfully', likes: post.likes, liked: false });
+      return res.json({ message: 'Post unliked successfully', likes: post.likes, liked: false });
     } else {
       await post.addLikedBy(req.user);
       post.likes += 1;
@@ -270,7 +270,7 @@ exports.commentPost = async (req, res) => {
 
     await createNotification('comment', parentPost.authorId, req.user.id, parentPost.id, comment.id);
 
-    res.status(201).json(parentPost);
+    return res.status(201).json(parentPost);
   } catch (error) {
     console.error('Failed to add reply:', error);
     return res.status(500).json({ error: 'Failed to add reply' });
