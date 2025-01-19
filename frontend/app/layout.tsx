@@ -4,6 +4,7 @@ import './globals.css'
 import { ThemeProvider } from "@/contexts/theme-context"
 import { AuthProvider } from '@/contexts/auth-context'
 import { LayoutWithAuth } from "@/app/layoutWithAuth"
+import { QuestProvider } from '@/contexts/QuestContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <ThemeProvider>
-            <LayoutWithAuth>{children}</LayoutWithAuth>
+            <QuestProvider>
+              <LayoutWithAuth>{children}</LayoutWithAuth>
+            </QuestProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>
