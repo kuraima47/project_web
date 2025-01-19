@@ -169,14 +169,14 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
             </div>
           )}
           {media && (
-            <div className="mt-2">
+            <div className="mt-2 flex items-center justify-center">
               {media.endsWith('.mp4') ? (
                 <video src={media} controls className="w-full rounded-lg" />
               ) : (
                 <img
                   src={`${getApiUrl(`/api/posts/media/${media}`)}`}
                   alt="Post media"
-                  className="w-full rounded-lg"
+                  className="max-w-[512px] max-h-[128px] rounded-lg object-contain"
                 />
               )}
             </div>

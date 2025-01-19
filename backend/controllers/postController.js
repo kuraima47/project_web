@@ -92,11 +92,10 @@ exports.getAllFollowingPosts = async (req, res) => {
  * @param {Object} res - L'objet réponse Express.
  * @returns {Promise<void>} Aucune valeur retournée directement. La réponse est rendue via `res.render` ou `res.status`.
  */
-const path = require('path');
-const fs = require('fs');
-
 exports.viewImage = async (req, res) => {
   try {
+    const path = require('path');
+    const fs = require('fs');
     const photoName = req.params.photoName;
     const filePath = path.join(__dirname, '../uploads', photoName);
 
