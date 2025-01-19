@@ -19,6 +19,9 @@ const { getSocketIdFromUserId } = require('../websockets/notifications');
  */
 exports.createNotification = async (type, userId, actorId, postId = null, commentId = null) => {
   try {
+
+    if(userId == actorId) return;
+
     // Créer la notification dans la base de données
     const notification = await Notification.create({
       type,
