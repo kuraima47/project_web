@@ -1,5 +1,5 @@
 const { getGeneralFeedForUser } = require('../services/feedService');
-const User = require('../models/user');
+const {User} = require('../models');
 
 /**
  * Récupère le flux général des posts pour un utilisateur.

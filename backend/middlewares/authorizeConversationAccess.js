@@ -1,4 +1,4 @@
-const Conversation = require('../models/conversation');
+const {Conversation} = require('../models');
 
 exports.getAuthConv = async (req, res, next) => {
   try {

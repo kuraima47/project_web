@@ -134,6 +134,7 @@ export default function Conversation() {
   // Handle sending a new message
   const handleSendMessage = async (e) => {
     e.preventDefault();
+    console.log("Sending message:", newMessage);
     if (newMessage.trim()) {
       const newMsg = {
         content: newMessage,
@@ -147,7 +148,7 @@ export default function Conversation() {
         createdAt: new Date(),
       };
 
-      try {
+
         const response = await fetch(getApiUrl(`/api/messages/${friendUser.id}`), {
           method: "POST",
           headers: {
@@ -165,9 +166,7 @@ export default function Conversation() {
           console.error("Error sending message:", response.statusText);
         }
         setNewMessage("");
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
+
     }
   };
 

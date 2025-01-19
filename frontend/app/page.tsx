@@ -22,7 +22,7 @@ export default function Home() {
 
     const fetchPosts = async () => {
         try {
-            const response = await fetch(getApiUrl("/api/posts"), {
+            const response = await fetch(getApiUrl("/api/feed/general"), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }

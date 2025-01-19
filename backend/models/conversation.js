@@ -25,9 +25,5 @@ const Conversation = sequelize.define('Conversation', {
   timestamps: true,
 });
 
-Conversation.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
-Conversation.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
-User.hasMany(Conversation, { as: 'sentConversations', foreignKey: 'senderId' });
-User.hasMany(Conversation, { as: 'receivedConversations', foreignKey: 'receiverId' });
 
 module.exports = Conversation;

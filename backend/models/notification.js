@@ -15,8 +15,5 @@ const Notification = sequelize.define('Notification', {
     },
 });
 
-Notification.belongsTo(User, { as: 'user', foreignKey: 'userId' });
-Notification.belongsTo(User, { as: 'actor', foreignKey: 'actorId' });
-Notification.belongsTo(Post, { as: 'post', foreignKey: 'postId' });
 
 module.exports = Notification;

@@ -1,8 +1,7 @@
 // controllers/pixelWarController.js
 
 const { Op } = require('sequelize');
-const Pixel = require('../models/pixel');
-const User = require('../models/user');
+const { Pixel, User} = require('../models');
 
 const { getIoPixelWar } = require('../socket');
 

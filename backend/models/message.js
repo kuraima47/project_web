@@ -41,10 +41,6 @@ const Message = sequelize.define('Message', {
   timestamps: true,
 });
 
-// Définir la relation 'belongsTo' avec Conversation et User
-Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
-Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
-Message.belongsTo(Conversation, { as: 'conversation', foreignKey: 'conversationId' });
-Conversation.hasMany(Message, { as: 'messages', foreignKey: 'conversationId' });
+
 
 module.exports = Message;
