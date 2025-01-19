@@ -1,7 +1,7 @@
 // models/interest.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const UserInterest = require('./UserInterest');
+const UserInterest = require('./userInterest');
 const User = require('./user');
 
 const Interest = sequelize.define('Interest', {

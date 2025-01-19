@@ -2,8 +2,8 @@
 
 const { Op } = require('sequelize');
 const Post = require('../models/post');
-const UserInterest = require('../models/UserInterest');
-const Interest = require('../models/Interest');
+const UserInterest = require('../models/userInterest');
+const Interest = require('../models/interest');
 const Hashtag = require('../models/hashtag');
 const moment = require('moment');
 
