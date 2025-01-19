@@ -27,10 +27,10 @@ exports.getNotifications = async (req, res) => {
             order: [['createdAt', 'DESC']],
         });
 
-        res.json(notifications);
+        return res.json(notifications);
     } catch (error) {
         console.error('Error fetching notifications:', error);
-        res.status(500).json({ error: 'Failed to fetch notifications' });
+        return res.status(500).json({ error: 'Failed to fetch notifications' });
     }
 };
 
@@ -57,10 +57,10 @@ exports.getUnreadNotifications = async (req, res) => {
             order: [['createdAt', 'DESC']],
         });
 
-        res.json(notifications);
+        return res.json(notifications);
     } catch (error) {
         console.error('Error fetching notifications:', error);
-        res.status(500).json({ error: 'Failed to fetch notifications' });
+        return res.status(500).json({ error: 'Failed to fetch notifications' });
     }
 };
 
@@ -91,10 +91,10 @@ exports.markAllNotificationsAsRead = async (req, res) => {
             await n.save();   
         });
 
-        res.json({ message: 'Notification marked as read' });
+        return res.json({ message: 'Notification marked as read' });
     } catch (error) {
         console.error('Error marking notification as read:', error);
-        res.status(500).json({ error: 'Failed to mark notification as read' });
+        return res.status(500).json({ error: 'Failed to mark notification as read' });
     }
 };
 
@@ -123,9 +123,9 @@ exports.markNotificationAsRead = async (req, res) => {
         notification.read = true;
         await notification.save();
 
-        res.json({ message: 'Notification marked as read' });
+        return res.json({ message: 'Notification marked as read' });
     } catch (error) {
         console.error('Error marking notification as read:', error);
-        res.status(500).json({ error: 'Failed to mark notification as read' });
+        return res.status(500).json({ error: 'Failed to mark notification as read' });
     }
 };
