@@ -1,5 +1,9 @@
 # Projet Web
 
+## Documentation Swagger
+
+Disponible ici : [swagger-api.yml](./swagger-api.yml)
+
 ## Déploiement
 
 ### Local
