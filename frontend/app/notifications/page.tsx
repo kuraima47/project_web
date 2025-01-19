@@ -124,10 +124,10 @@ export default function Notifications() {
                                     {getNotificationText(notification)}
                                 </p>
                                 {notification.type !== 'follow' && notification.post && (
-                                    <p className="text-sm text-muted-foreground truncate">{notification.post.content}</p>
+                                    <p style={{ wordWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }} className="text-sm text-muted-foreground truncate">{notification.post.content}</p>
                                 )}
                                 {notification.type === 'comment' && notification.comment && (
-                                    <p className="text-sm text-muted-foreground truncate">{notification.comment.content}</p>
+                                    <p style={{ wordWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }} className="text-sm text-muted-foreground truncate">{notification.comment.content}</p>
                                 )}
                                 <p className="text-xs text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</p>
                             </div>
