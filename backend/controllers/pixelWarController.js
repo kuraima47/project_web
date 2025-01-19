@@ -41,7 +41,7 @@ const pixelWarController = {
         },
       });
 
-      if (recentPixels >= 50) {
+      if (recentPixels >= 500) {
         return res.status(400).json({ error: 'Vous devez attendre 1 heure avant de pouvoir reposer vos pixels. (ou alors attendre qu\'ils soient recouverts)' });
       }
 
