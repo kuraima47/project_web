@@ -1,4 +1,4 @@
-const isProduction = false;
+const isProduction = true;
 
 export const API_URL = isProduction
   ? 'https://panneauramix.fr' // URL de l'API en production
