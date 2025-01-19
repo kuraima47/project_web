@@ -22,7 +22,7 @@ export function ColorPicker({ color, setColor }) {
       {open && (
         <div className="absolute top-0 left-0 bg-white border border-gray-300 p-2 shadow-md rounded-md">
           <div className="flex">
-            {["#000000","#865840","#f44336","#e81e63","#9c27b0","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#8bc34a","#cddc39","#ffeb3b","#ffc107","#ff9800","#ff5722","#ffffff"]
+            {["#000000","#808080","#865840","#f44336","#e81e63","#9c27b0","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#8bc34a","#cddc39","#ffeb3b","#ffc107","#ff9800","#ff5722","#ffffff"]
 .map((col) => (
               <div
                 key={col}

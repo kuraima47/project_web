@@ -6,6 +6,58 @@ const { User,Notification,Interest,UserInterest,UserFollows} = require('../model
 const jwt = require('jsonwebtoken');
 const { createNotification } = require('../services/notificationService');
 
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
+/**
+ * Connecte un utilisateur ou le crée s'il n'existe pas.
+ * L'adresse est dérivée en tant que hachage de l'e-mail.
+ * 
+ * @param {Object} req - La requête contenant l'e-mail et le mot de passe.
+ * @param {Object} res - La réponse contenant l'utilisateur et le token JWT.
+ * @returns {Object} Réponse JSON contenant l'utilisateur et le token.
+ */
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Générer une "adresse" à partir d'un hash de l'e-mail
+    const address = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+
+    // Rechercher l'utilisateur par adresse
+    let user = await User.findOne({ where: { address } });
+
+    if (!user) {
+      // Si l'utilisateur n'existe pas, créer un nouvel utilisateur
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = await User.create({
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        address,
+      });
+    } else {
+      // Si l'utilisateur existe, vérifier le mot de passe
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+    }
+
+    // Générer un token JWT
+    const secretKey = process.env.JWT_SECRET || 'jwt_secret_key';
+    const token = jwt.sign(
+      { id: user.id },
+      secretKey,
+      { expiresIn: '1d' }
+    );
+
+    // Renvoyer l'utilisateur et le token
+    return res.json({ user, token });
+  } catch (error) {
+    console.error('Error in login:', error);
+    return res.status(500).json({ error: 'Login failed' });
+  }
+}
+
 /**
  * Authentifie un utilisateur en vérifiant sa signature et adresse.
  * Si l'utilisateur n'existe pas, il est créé.

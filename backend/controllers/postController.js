@@ -5,6 +5,116 @@ const {Post,User,Interest,UserInterest,Repost,Hashtag}  = require('../models');
 const { createNotification } = require('../services/notificationService');
 
 /**
+ * Récupère les posts des abonnements de l'utilisateur connecté.
+ * Les posts sont triés par date de création.
+ *
+ * @param {Object} req - Requête HTTP (l'utilisateur connecté doit être dans req.user).
+ * @param {Object} res - Réponse HTTP contenant les posts triés.
+ * @returns {Object} - Réponse JSON avec tous les posts des utilisateurs suivis.
+ */
+exports.getAllFollowingPosts = async (req, res) => {
+  try {
+    // Récupérer l'ID de l'utilisateur connecté
+    const userId = req.user.id;
+
+    // Vérifier que l'utilisateur est authentifié
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Étape 1 : Récupérer les utilisateurs suivis
+    const following = await User.findAll({
+      include: [
+        {
+          model: User,
+          as: 'following', // Alias défini dans la relation
+          attributes: ['id'], // Récupérer uniquement les IDs
+          through: { attributes: [] }, // Supprimer les métadonnées inutiles
+        },
+      ],
+      where: { id: userId },
+    });
+
+    if (!following.length || !following[0].following.length) {
+      return res.json([]); // Aucun abonnement
+    }
+
+    // Extraire les IDs des utilisateurs suivis
+    const followingIds = following[0].following.map((user) => user.id);
+
+    // Étape 2 : Récupérer les posts des utilisateurs suivis
+    const posts = await Post.findAll({
+      where: {
+        authorId: followingIds, // Posts des utilisateurs suivis
+        parentPostId: null, // Récupérer uniquement les posts racines
+      },
+      include: [
+        {
+          model: User,
+          as: 'author', // Inclure l'auteur des posts
+          attributes: ['id', 'username', 'avatar', 'address'],
+        },
+        {
+          model: Post,
+          as: 'responses', // Inclure les réponses
+          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
+        },
+        {
+          model: Hashtag,
+          as: 'Hashtags', // Inclure les hashtags associés
+          attributes: ['name'],
+          through: { attributes: [] },
+        },
+      ],
+      order: [['createdAt', 'DESC']], // Trier par date de création
+    });
+
+    // Étape 3 : Retourner les posts triés
+    return res.json(posts);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+},
+
+/**
+ * Affiche le contenu d'un document Markdown associé à une release spécifique d'un projet.
+ *
+ * Cette fonction extrait le nom du document depuis les paramètres de la requête.
+ * Elle vérifie si l'utilisateur est connecté, puis récupère la release correspondante.
+ * Elle s'assure que le document demandé appartient bien à la release.
+ * Ensuite, elle construit le chemin du fichier en fonction de l'environnement (test ou production).
+ * Si le fichier existe, son contenu Markdown est converti en HTML et rendu dans la vue 'markdown'. Sinon, une erreur est renvoyée.
+ *
+ * @async
+ * @function viewDocument
+ * @param {Object} req - L'objet requête Express contenant  `photoName` dans les paramètres.
+ * @param {Object} res - L'objet réponse Express.
+ * @returns {Promise<void>} Aucune valeur retournée directement. La réponse est rendue via `res.render` ou `res.status`.
+ */
+exports.viewImage = async (req, res) => {
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const photoName = req.params.photoName;
+    const filePath = path.join(__dirname, '../uploads', photoName);
+
+    // Vérification si le fichier existe
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Fichier non trouvé' });
+    }
+
+    // Envoi du fichier
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Erreur lors de la visualisation du fichier:', error);
+    res.status(500).json({ error: 'Erreur lors de la visualisation du fichier' });
+  }
+};
+
+
+
+/**
  * Récupère tous les posts racines (sans parent) triés par date de création.
  * Inclut l'auteur, les réponses, et les hashtags associés.
  * 

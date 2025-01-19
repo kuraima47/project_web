@@ -89,7 +89,7 @@ export function AdvancedSearch() {
                       </Link>
                   )}
                   {result.type === 'post' && (
-                      <Link href={`/post/${result.id}`}>
+                      <Link href={`/posts/${result.id}`}>
                         <p className="font-semibold">@{result.username}</p>
                         <p>{result.content}</p>
                         <p className="text-sm text-muted-foreground">{result.timestamp}</p>

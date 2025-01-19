@@ -116,4 +116,85 @@ const getCryptoPricesWithName = async (req, res) => {
   }
 };
 
-module.exports = { getCryptoPrices, getCryptoPricesWithName };
+const getCryptoSparkline = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cachedData = await redisClient.lRange(cacheKey, 0, -1); // Récupère tous les éléments
+    const prices = [];
+    
+    // Parcourir les données en cache pour extraire les prix
+    for (const item of cachedData) {
+      const data = JSON.parse(item);
+      const crypto = data.data.find(c => c.id === parseInt(id));
+      if (crypto) {
+        prices.push(crypto.quote.USD.price);
+      }
+    }
+
+    // Limiter à 7 points de données pour la sparkline
+    const sparklineData = prices.slice(-7);
+    
+    res.json(sparklineData);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données sparkline:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+};
+
+const getCryptoDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cachedData = await redisClient.lRange(cacheKey, -1, -1); // Récupère la dernière entrée
+    const data = JSON.parse(cachedData[0]);
+    
+    const crypto = data.data.find(c => c.id === parseInt(id));
+    
+    if (!crypto) {
+      return res.status(404).json({ error: 'Crypto non trouvée' });
+    }
+
+    res.json(crypto);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des détails de la crypto:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+};
+
+const getCryptoById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Fetching crypto with ID:', id); // Debug log
+
+    // Récupérer les dernières données du cache Redis
+    const cachedData = await redisClient.lRange(cacheKey, -1, -1); // Prend la dernière entrée
+    if (!cachedData || cachedData.length === 0) {
+      console.log('No cached data found');
+      return res.status(404).json({ error: 'No crypto data available' });
+    }
+
+    const data = JSON.parse(cachedData[0]);
+    console.log('Found cached data:', data.data.length, 'cryptos'); // Debug log
+
+    // Chercher la crypto avec l'ID correspondant
+    const crypto = data.data.find(c => c.id === parseInt(id));
+    
+    if (!crypto) {
+      console.log('Crypto not found with ID:', id);
+      return res.status(404).json({ error: 'Crypto not found' });
+    }
+
+    console.log('Found crypto:', crypto.name); // Debug log
+    res.json(crypto);
+  } catch (error) {
+    console.error('Error fetching crypto by ID:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+module.exports = {
+  fetchAndStoreCryptoPrices,
+  getCryptoPrices,
+  getCryptoPricesWithName,
+  getCryptoSparkline,
+  getCryptoDetail
+};

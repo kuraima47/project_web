@@ -13,9 +13,16 @@ Télécharger un serveur redis et le lancer.
 - [redis-windows](https://github.com/microsoftarchive/redis/releases/tag/win-3.0.504)
 - [redis-linux](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/)
 
-Modifier la ligne du fichier [address.tsx](./frontend/utils/address.tsx) :
+Avoir un serveur postgres qui tourne et ce sera crée sur le schéma public.
+
+Configurer le .env dans backend.
+
+Exemple
 ```
-const isProduction = false
+DB_HOST_PROJET="127.0.0.1"
+DB_USER_PROJET="postgres"
+DB_PASSWORD_PROJET="Emilien33600"
+DB_NAME_PROJET="postgres"
 ```
 
 Ouvrez deux terminaux. `./frontend` et `./backend`, il faudra taper la commande dans chacun `npm run dev`
@@ -63,7 +70,7 @@ sudo docker restart nginx-proxy
 
 Stopper l'image, rebuild et relancer.
 ```
-sudo docker-compose down -v --remove-orphans
+sudo docker-compose down
 sudo docker-compose up --build -d
 ```
 
@@ -81,5 +88,5 @@ sudo docker-compose -f docker-compose.prod.yml up
 Stop:
 
 ```
-sudo docker-compose down -v --remove-orphans
+sudo docker-compose down
 ```
