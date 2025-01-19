@@ -67,7 +67,7 @@ exports.search = async (req, res) => {
                     'name', // Nom du hashtag
                     [sequelize.fn('COUNT', sequelize.col('Posts.id')), 'count'] // Nombre de posts associés au hashtag
                 ],
-                include: [{ model: Post, attributes: [] }], // Inclusion des posts associés (sans attribuer de champs à retourner)
+                include: [{ model: Post, as: 'Posts', attributes: [] }], // Inclusion des posts associés (sans attribuer de champs à retourner)
                 group: ['Hashtag.id'], // Regroupement des résultats par hashtag
                 raw: true // Retourne les résultats sous forme brute
             });

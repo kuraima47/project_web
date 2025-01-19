@@ -5,6 +5,80 @@ const {Post,User,Interest,UserInterest,Repost,Hashtag}  = require('../models');
 const { createNotification } = require('../services/notificationService');
 
 /**
+ * Récupère les posts des abonnements de l'utilisateur connecté.
+ * Les posts sont triés par date de création.
+ *
+ * @param {Object} req - Requête HTTP (l'utilisateur connecté doit être dans req.user).
+ * @param {Object} res - Réponse HTTP contenant les posts triés.
+ * @returns {Object} - Réponse JSON avec tous les posts des utilisateurs suivis.
+ */
+exports.getAllFollowingPosts = async (req, res) => {
+  try {
+    // Récupérer l'ID de l'utilisateur connecté
+    const userId = req.user.id;
+
+    // Vérifier que l'utilisateur est authentifié
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Étape 1 : Récupérer les utilisateurs suivis
+    const following = await User.findAll({
+      include: [
+        {
+          model: User,
+          as: 'following', // Alias défini dans la relation
+          attributes: ['id'], // Récupérer uniquement les IDs
+          through: { attributes: [] }, // Supprimer les métadonnées inutiles
+        },
+      ],
+      where: { id: userId },
+    });
+
+    if (!following.length || !following[0].following.length) {
+      return res.json([]); // Aucun abonnement
+    }
+
+    // Extraire les IDs des utilisateurs suivis
+    const followingIds = following[0].following.map((user) => user.id);
+
+    // Étape 2 : Récupérer les posts des utilisateurs suivis
+    const posts = await Post.findAll({
+      where: {
+        authorId: followingIds, // Posts des utilisateurs suivis
+        parentPostId: null, // Récupérer uniquement les posts racines
+      },
+      include: [
+        {
+          model: User,
+          as: 'author', // Inclure l'auteur des posts
+          attributes: ['id', 'username', 'avatar', 'address'],
+        },
+        {
+          model: Post,
+          as: 'responses', // Inclure les réponses
+          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
+        },
+        {
+          model: Hashtag,
+          as: 'Hashtags', // Inclure les hashtags associés
+          attributes: ['name'],
+          through: { attributes: [] },
+        },
+      ],
+      order: [['createdAt', 'DESC']], // Trier par date de création
+    });
+
+    // Étape 3 : Retourner les posts triés
+    return res.json(posts);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+},
+
+
+/**
  * Récupère tous les posts racines (sans parent) triés par date de création.
  * Inclut l'auteur, les réponses, et les hashtags associés.
  * 
@@ -146,24 +220,46 @@ exports.getPost = async (req, res) => {
   try {
     const post = await Post.findByPk(id, {
       include: [
-        { model: User, as: 'author', attributes: ['id', 'username', 'avatar'] },
+        {
+          model: User,
+          as: "author",
+          attributes: ["id", "username", "avatar"],
+        },
         {
           model: Post,
           as: 'responses',
-          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
-          order: [['createdAt', 'DESC']],
+          include: [
+            {
+              model: User,
+              as: 'author'
+            },
+            {
+              model: Post,
+              as: 'responses',
+              include: [
+                {
+                  model: User,
+                  as: 'author'
+                },
+              ],
+            }
+          ],
         },
+      ],
+      // Pour trier *uniquement* les "responses" en DESC :
+      order: [
+        [{ model: Post, as: "responses" }, "createdAt", "DESC"]
       ],
     });
 
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: "Post not found" });
     }
 
     return res.json(post);
   } catch (error) {
-    console.error('Error fetching post with replies:', error);
-    return res.status(500).json({ error: 'Failed to fetch post' });
+    console.error("Error fetching post with replies:", error);
+    return res.status(500).json({ error: "Failed to fetch post" });
   }
 };
 

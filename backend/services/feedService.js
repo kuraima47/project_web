@@ -65,7 +65,7 @@ function computePostScore(post, interestScoreMap) {
     const now = moment();
     const postCreation = moment(post.createdAt);
     const hoursOld = now.diff(postCreation, 'hours');
-    score -= hoursOld * 0.1;
+    score += hoursOld * 0.1;
 
     // C) Match avec les intérêts de l'utilisateur
     if (post.Hashtags && post.Hashtags.length) {

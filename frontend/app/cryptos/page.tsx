@@ -5,6 +5,11 @@ import { Line, Scatter } from "react-chartjs-2"; // Utilisation de Line pour le 
 import "chart.js/auto";
 import { getApiUrl } from "@/utils/address";
 
+// Ajout d'un nouveau type pour les données historiques
+interface SparklineData {
+  [key: string]: number[];
+}
+
 export default function Cryptos() {
   const [cryptoData, setCryptoData] = useState([]);  // Contient les données historiques de la crypto
   const [cryptoList, setCryptoList] = useState([]);  // Liste des cryptos disponibles
@@ -12,6 +17,8 @@ export default function Cryptos() {
   const [loading, setLoading] = useState(true);  // Indicateur de chargement
   const [historicalPrices, setHistoricalPrices] = useState([]); // Historique des prix
   const [currentPrices, setCurrentPrices] = useState([]);
+  const [sortConfig, setSortConfig] = useState({ key: 'market_cap', direction: 'desc' });
+  const [sparklineData, setSparklineData] = useState<SparklineData>({});
 
   // Fonction pour charger les données des cryptos disponibles
   useEffect(() => {
@@ -19,19 +26,34 @@ export default function Cryptos() {
       try {
         const response = await fetch(getApiUrl("/api/cryptos"));
         const data = await response.json();
-
-        setCryptoList(data.data || []);
-        setLoading(false);
-
-        const prices = data.data.map(crypto => ({
+        
+        const formattedData = data.data.map(crypto => ({
+          id: crypto.id,
           name: crypto.name,
+          symbol: crypto.symbol,
           price: crypto.quote.USD.price,
+          percent_change_1h: crypto.quote.USD.percent_change_1h,
+          percent_change_24h: crypto.quote.USD.percent_change_24h,
         }));
 
-        prices.sort((a, b) => b.price - a.price);
+        setCryptoData(formattedData);
 
-        setCurrentPrices(prices);
-
+        // Récupération des données historiques pour les sparklines
+        const sparklines = {};
+        for (const crypto of data.data) {
+          try {
+            const historyResponse = await fetch(getApiUrl(`/api/cryptos/${crypto.id}/sparkline`));
+            const historyData = await historyResponse.json();
+            console.log(`Sparkline data for ${crypto.id}:`, historyData); // Debug log
+            sparklines[crypto.id] = historyData.prices || historyData; // Gestion plus flexible de la réponse
+          } catch (error) {
+            console.error(`Error fetching sparkline for ${crypto.id}:`, error);
+            sparklines[crypto.id] = [];
+          }
+        }
+        console.log('All sparkline data:', sparklines); // Debug log
+        setSparklineData(sparklines);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching crypto list:", error);
         setLoading(false);
@@ -84,8 +106,8 @@ export default function Cryptos() {
       {
         label: selectedCrypto ? `${selectedCrypto} - Prix en USD` : "Prix en USD",
         data: historicalPrices.map((data) => data.price), // Données des prix
-        borderColor: "rgba(75, 192, 192, 1)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgb(76, 76, 76)",
+        backgroundColor: "rgba(21, 21, 21, 0.2)",
         fill: true,
         tension: 0.4, // Courbe douce
       },
@@ -101,8 +123,8 @@ export default function Cryptos() {
           y: crypto.price, // Prix sur l'axe des Y
           cryptoName: crypto.name, // Ajouter le nom de la crypto pour l'utiliser dans le tooltip
         })),
-        backgroundColor: "rgba(75, 192, 192, 1)",
-        borderColor: "rgba(75, 192, 192, 1)",
+        backgroundColor: "rgba(21, 21, 21, 0.2)",
+        borderColor: "rgb(84, 84, 84)",
         showLine: false,
         pointRadius: 5,
         pointHoverRadius: 7,
@@ -187,50 +209,115 @@ export default function Cryptos() {
     },
   };
 
+  // Fonction de tri
+  const sortData = (key) => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Composant pour le mini graphique
+  const Sparkline = ({ data, positive }) => {
+    console.log('Sparkline received data:', data); // Debug log
+
+    if (!data || data.length === 0) {
+      console.log('No data for sparkline'); // Debug log
+      return <div className="w-[120px] h-[40px] bg-gray-100 dark:bg-gray-700" />;
+    }
+
+    const height = 40;
+    const width = 120;
+    const points = data.length;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min || 1; // Éviter la division par zéro
+
+    const points_string = data.map((value, index) => {
+      const x = (index / (points - 1)) * width;
+      const y = height - ((value - min) / range) * height;
+      return `${x},${y}`;
+    }).join(' ');
+
+    return (
+      <svg width={width} height={height} className="sparkline">
+        <polyline
+          points={points_string}
+          fill="none"
+          stroke={positive ? "#16a34a" : "#dc2626"}
+          strokeWidth="1.5"
+        />
+        {/* Ajout d'un point pour le dernier prix */}
+        <circle
+          cx={(points - 1) * (width / (points - 1))}
+          cy={height - ((data[data.length - 1] - min) / range) * height}
+          r="2"
+          fill={positive ? "#16a34a" : "#dc2626"}
+        />
+      </svg>
+    );
+  };
+
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold">Analyser une crypto</h1>
-      {/* Champ de sélection avec auto-complétion */}
-      <div className="mb-4">
-        <input
-          type="text"
-          list="crypto-list"
-          placeholder="Rechercher une crypto"
-          onChange={handleCryptoSelect}
-          className="border p-2 rounded"
-        />
-        <datalist id="crypto-list">
-          {cryptoList.map((crypto) => (
-            <option key={crypto.id} value={crypto.name} />
-          ))}
-        </datalist>
-      </div>
-
-      {/* Affichage du graphique si crypto est sélectionnée */}
-      {loading ? (
-        <p>Chargement...</p>
-      ) : selectedCrypto ? (
-        <div style={{ height: "400px", width: "100%" }}>
-          {/* Affichage du graphique avec les prix historiques */}
-          <Line data={lineData} options={lineOptions} />
-        </div>
-      ) : (
-        <p>Veuillez sélectionner une crypto pour afficher son graphique.</p>
-      )}
-      <div
-        style={{
-          height: "400px",
-          width: "100%",
-          marginTop: "20px",
-          overflowX: "auto", // Permet le scroll horizontal
-          overflowY: "hidden",
-        }}
-      >
-        <h1 className="text-2xl font-bold">Nuage de Points des Prix des Cryptos</h1>
-        <div style={{ height: "400px", width: `${currentPrices.length * 50}px`, display: "flex" }}>
-          {/* Affichage des points du nuage pour chaque crypto */}
-          <Scatter data={scatterData} options={scatterOptions} />
-        </div>
+      <h1 className="text-2xl font-bold mb-6">Marché des Cryptomonnaies</h1>
+      
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white dark:bg-gray-800">
+          <thead>
+            <tr className="border-b dark:border-gray-700">
+              <th className="px-4 py-3 text-left">#</th>
+              <th className="px-4 py-3 text-left">Nom</th>
+              <th className="px-4 py-3 text-right cursor-pointer" onClick={() => sortData('price')}>
+                Prix
+              </th>
+              <th className="px-4 py-3 text-right cursor-pointer" onClick={() => sortData('percent_change_1h')}>
+                1h %
+              </th>
+              <th className="px-4 py-3 text-right cursor-pointer" onClick={() => sortData('percent_change_24h')}>
+                24h %
+              </th>
+              <th className="px-4 py-3">Last 7 Days</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cryptoData
+              .sort((a, b) => {
+                if (sortConfig.direction === 'asc') {
+                  return a[sortConfig.key] - b[sortConfig.key];
+                }
+                return b[sortConfig.key] - a[sortConfig.key];
+              })
+              .map((crypto, index) => (
+                <tr key={crypto.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-4 py-3">{index + 1}</td>
+                  <td className="px-4 py-3 flex items-center gap-2">
+                    <span className="font-medium">{crypto.name}</span>
+                    <span className="text-gray-500">{crypto.symbol}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    ${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className={`px-4 py-3 text-right ${crypto.percent_change_1h > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {crypto.percent_change_1h.toFixed(2)}%
+                  </td>
+                  <td className={`px-4 py-3 text-right ${crypto.percent_change_24h > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {crypto.percent_change_24h.toFixed(2)}%
+                  </td>
+                  <td className="px-4 py-3">
+                    {sparklineData[crypto.id] ? (
+                      <Sparkline 
+                        data={sparklineData[crypto.id]} 
+                        positive={crypto.percent_change_24h > 0}
+                      />
+                    ) : (
+                      <div className="w-[120px] h-[40px] bg-gray-100 dark:bg-gray-700" />
+                    )}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
