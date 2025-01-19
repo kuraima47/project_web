@@ -1,3 +1,6 @@
 .idea
 node_modules/
 node_module/
+backend/config/database.js
+frontend/package-lock.json
+frontend/package.json

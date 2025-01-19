@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Line, Scatter } from "react-chartjs-2"; // Utilisation de Line pour le graphique de ligne
 import "chart.js/auto";
 import { getApiUrl } from "@/utils/address";
+import { useRouter } from 'next/navigation';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 // Ajout d'un nouveau type pour les données historiques
 interface SparklineData {
@@ -19,6 +21,8 @@ export default function Cryptos() {
   const [currentPrices, setCurrentPrices] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: 'market_cap', direction: 'desc' });
   const [sparklineData, setSparklineData] = useState<SparklineData>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
 
   // Fonction pour charger les données des cryptos disponibles
   useEffect(() => {
@@ -258,10 +262,30 @@ export default function Cryptos() {
     );
   };
 
+  // Fonction de filtrage des cryptos
+  const filteredCryptos = cryptoData.filter(crypto => 
+    crypto.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    crypto.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-6">Marché des Cryptomonnaies</h1>
       
+      {/* Barre de recherche */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <input
+            type="text"
+            placeholder="Rechercher une crypto..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 pl-10 pr-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+          />
+          <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white dark:bg-gray-800">
           <thead>
@@ -281,7 +305,7 @@ export default function Cryptos() {
             </tr>
           </thead>
           <tbody>
-            {cryptoData
+            {filteredCryptos
               .sort((a, b) => {
                 if (sortConfig.direction === 'asc') {
                   return a[sortConfig.key] - b[sortConfig.key];
@@ -289,7 +313,11 @@ export default function Cryptos() {
                 return b[sortConfig.key] - a[sortConfig.key];
               })
               .map((crypto, index) => (
-                <tr key={crypto.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr 
+                  key={crypto.id} 
+                  className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                  onClick={() => router.push(`/cryptos/${crypto.id}`)}
+                >
                   <td className="px-4 py-3">{index + 1}</td>
                   <td className="px-4 py-3 flex items-center gap-2">
                     <span className="font-medium">{crypto.name}</span>
