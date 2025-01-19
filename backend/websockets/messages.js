@@ -79,9 +79,9 @@ function handleMessageCooldown(socket, message) {
   const currentTime = Date.now();
 
   // Vérification de la taille du message
-  if (message.content.length > 120) {
+  if (message.content.length > 3000) {
     socket.emit('receiveMessageError', {
-      error: "Le message ne peut pas dépasser 120 caractères.",
+      error: "Le message ne peut pas dépasser 3000 caractères.",
     });
     return false;
   }
