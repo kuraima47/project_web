@@ -70,7 +70,7 @@ sudo docker restart nginx-proxy
 
 Stopper l'image, rebuild et relancer.
 ```
-sudo docker-compose down -v
+sudo docker-compose down
 sudo docker-compose up --build -d
 ```
 
@@ -88,5 +88,5 @@ sudo docker-compose -f docker-compose.prod.yml up
 Stop:
 
 ```
-sudo docker-compose down -v 
+sudo docker-compose down
 ```
