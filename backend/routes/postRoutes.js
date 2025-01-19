@@ -7,6 +7,7 @@ const upload = require('../middlewares/upload');
 const router = express.Router();
 
 router.get('/', authenticate, postController.getAllPosts);
+router.get('/following', authenticate, postController.getAllFollowingPosts)
 router.get('/:id', authenticate, postController.getPost);
 router.get('/infos/:id', authenticate, postController.getPostInfos);
 router.get('/user/:address', authenticate, postController.getUserPosts);

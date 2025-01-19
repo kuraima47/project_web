@@ -6,13 +6,14 @@ import { useEffect, useState } from 'react'
 import { CreatePost } from "@/components/create-post"
 import { PostCard } from "@/components/post-card"
 import { getApiUrl } from "@/utils/address";
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
     const { user, isLoading } = useAuth()
     const router = useRouter()
     const [posts, setPosts] = useState([])
     const [route, setRoute] = useState("/api/feed/general")
+    const [selectedRoute, setSelectedRoute] = useState("/api/feed/general") // Nouvel état pour le bouton sélectionné
 
     useEffect(() => {
         if (!isLoading && !user) {
@@ -24,7 +25,7 @@ export default function Home() {
 
     const fetchPosts = async () => {
         try {
-            const response = await fetch(getApiUrl("/api/posts"), {
+            const response = await fetch(getApiUrl(route), { // Utiliser la route dynamique
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -41,9 +42,10 @@ export default function Home() {
         }
     }
 
-    const handleRouteChange = async (route) => {
-        console.log("Change Routes : ", route);
-        setRoute(route);
+    const handleRouteChange = (newRoute) => {
+        console.log("Change Routes : ", newRoute);
+        setRoute(newRoute)
+        setSelectedRoute(newRoute) // Met à jour le bouton sélectionné
     }
 
     if (isLoading || !user) {
@@ -55,8 +57,27 @@ export default function Home() {
             <div className="flex justify-between">
                 <h2 className="text-2xl font-semibold mb-6">Fil d'actualité</h2>
                 <div className="flex space-x-4">
-                    <Button onClick={() => handleRouteChange("/api/posts")} variant="default" size="default">Général</Button>
-                    <Button onClick={() => handleRouteChange("/api/feed/general")} variant="default" size="default">Abonnements</Button>
+                    <Button
+                        onClick={() => handleRouteChange("/api/posts")}
+                        variant={selectedRoute === "/api/posts" ? "primary" : "default"} // Change le style
+                        size="default"
+                    >
+                        Global
+                    </Button>
+                    <Button
+                        onClick={() => handleRouteChange("/api/feed/general")}
+                        variant={selectedRoute === "/api/feed/general" ? "primary" : "default"} // Change le style
+                        size="default"
+                    >
+                        Pour Toi
+                    </Button>
+                    <Button
+                        onClick={() => handleRouteChange("/api/posts/following")}
+                        variant={selectedRoute === "/api/posts/following" ? "primary" : "default"} // Change le style
+                        size="default"
+                    >
+                        Abonnements
+                    </Button>
                 </div>
             </div>
 
@@ -82,4 +103,3 @@ export default function Home() {
         </div>
     )
 }
-
