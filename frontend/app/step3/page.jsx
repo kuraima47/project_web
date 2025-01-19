@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { QuestContext } from '../../contexts/QuestContext';
 import {Button} from "../../components/ui/button";
 import {Input} from "../../components/ui/input";
+import {getApiUrl} from "../../utils/address";
 export default function Step3() {
     const { currentStep, completeStep } = useContext(QuestContext);
     const [validated, setValidated] = useState(false);
@@ -13,11 +14,15 @@ export default function Step3() {
     useEffect(() => {
         if (currentStep === 2) {
             // On fait une requête pour "le suspense"
-            fetch('/api/secret-config')
+            fetch(getApiUrl('/api/easterEgg/secret-config'), {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            })
                 .then((res) => res.json())
                 .then((data) => {
                     console.log(
-                        '%cRegarde la réponse de /api/secret-config dans la Network tab',
+                        '%cRegarde les réponse dans la Network tab',
                         'color: #1e90ff;'
                     );
                     // Le JSON aura un champ crypté => "68656c6c6f" (hex pour "hello", par ex)
@@ -60,8 +65,7 @@ export default function Step3() {
         <div style={{ padding: '2rem' }}>
             <h1 className="text-4xl font-extrabold dark:text-white">Étape #3 : Fouille la Network tab</h1>
             <p>
-                Au chargement de cette page, une requête a été envoyée vers
-                <code>/api/secret-config</code>. Regarde dans ta DevTools / Network tab
+                Au chargement de cette page, une requête a été envoyée vers le serveur. Regarde dans ta DevTools / Network tab
                 et décrypte la valeur reçue...
             </p>
 
