@@ -30,21 +30,6 @@ const pixelWarController = {
         return res.status(400).json({ error: 'Données invalides' });
       }
 
-      // Limiter à 50 pixels par heure
-      const oneHourAgo = new Date(Date.now() - 3600000); // 1 heure en millisecondes
-      const recentPixels = await Pixel.count({
-        where: {
-          userId,
-          timestamp: {
-            [Op.gt]: oneHourAgo,
-          },
-        },
-      });
-
-      if (recentPixels >= 500) {
-        return res.status(400).json({ error: 'Vous devez attendre 1 heure avant de pouvoir reposer vos pixels. (ou alors attendre qu\'ils soient recouverts)' });
-      }
-
       // Créer un nouveau pixel dans la base de données
       const existPixel = await Pixel.findOne({ where: { x: x, y: y } });
       if (existPixel) {
