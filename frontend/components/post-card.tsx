@@ -173,7 +173,11 @@ export function PostCard({ id, content, createdAt, likes: initialLikes, Comments
               {media.endsWith('.mp4') ? (
                 <video src={media} controls className="w-full rounded-lg" />
               ) : (
-                <img src={media} alt="Post media" className="w-full rounded-lg" />
+                <img
+                  src={`${getApiUrl(`/api/posts/media/${media}`)}`}
+                  alt="Post media"
+                  className="w-full rounded-lg"
+                />
               )}
             </div>
           )}
