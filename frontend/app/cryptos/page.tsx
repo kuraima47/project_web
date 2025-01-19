@@ -43,7 +43,7 @@ export default function Cryptos() {
   // Fonction pour charger les données de prix historiques de la crypto sélectionnée
   const fetchCryptoData = async (cryptoName) => {
     try {
-      const response = await fetch(getApiUrl(`/cryptos/${cryptoName}`));
+      const response = await fetch(getApiUrl(`/api/cryptos/${cryptoName}`));
       const data = await response.json();
       setCryptoData(data || []);
       console.log(data);
