@@ -107,8 +107,8 @@ export default function Anarchie() {
       return;
     }
 
-    if (newMessage.trim().length > 120) {
-      alert("Le message ne peut pas dépasser 120 caractères.");
+    if (newMessage.trim().length > 3000) {
+      alert("Le message ne peut pas dépasser 3000 caractères.");
       return;
     }
 
@@ -145,7 +145,9 @@ export default function Anarchie() {
                   </Link>
                   <div className="flex flex-col">
                     <p className="font-semibold">{message.user.username}</p>
-                    <p>{message.content}</p>
+                    <p style={{ wordWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                      {message.content}
+                    </p>
                     <p className="text-xs text-right mt-1">
                       {new Date(message.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -166,7 +168,7 @@ export default function Anarchie() {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           className="flex-1"
-          maxLength={120} // Limite de caractères sur le champ
+          maxLength={3000} // Limite de caractères sur le champ
         />
         <Button type="submit" disabled={cooldown}>
           <Send className="h-4 w-4" />
