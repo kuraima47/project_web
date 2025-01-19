@@ -82,6 +82,6 @@ exports.search = async (req, res) => {
     } catch (error) {
         // Gestion des erreurs
         console.error('Search error:', error); // Affichage de l'erreur dans la console
-        res.status(500).json({ error: 'An error occurred while searching' }); // Retour d'une réponse d'erreur HTTP
+        return res.status(500).json({ error: 'An error occurred while searching' }); // Retour d'une réponse d'erreur HTTP
     }
 };

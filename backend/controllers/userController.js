@@ -105,7 +105,7 @@ exports.getFromToken = async (req, res) => {
     return res.status(401).json({ error: 'Invalid token payload' });
   }
   const user = await User.findByPk(decoded.id);
-  res.status(200).json(user);
+  return res.status(200).json(user);
 }
 
 /**

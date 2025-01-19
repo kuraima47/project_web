@@ -67,10 +67,10 @@ const getCryptoPrices = async (req, res) => {
     }
 
     // Si aucun élément n'est trouvé dans la liste
-    res.status(500).json({ error: 'Aucune donnée en cache disponible' });
+    return res.status(500).json({ error: 'Aucune donnée en cache disponible' });
   } catch (error) {
     console.error('Erreur lors de la récupération du dernier prix des cryptos :', error);
-    res.status(500).json({ error: 'Erreur interne du serveur' });
+    return res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 };
 
@@ -111,7 +111,7 @@ const getCryptoPricesWithName = async (req, res) => {
     }
   } catch (error) {
     console.error('Erreur lors de la récupération des prix d\'une crypto :', error);
-    res.status(500).json({ error: 'Erreur interne du serveur' });
+    return res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 };
 

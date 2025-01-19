@@ -64,7 +64,7 @@ exports.getUserPosts = async (req, res) => {
     const userToCheck = await User.findOne({ where: { address } });
 
     if (!userToCheck)
-      res.status(404).json({ error: 'Utilisateur introuvable avec l\'adresse spécifiée' });
+      return res.status(404).json({ error: 'Utilisateur introuvable avec l\'adresse spécifiée' });
 
     // Récupérer les posts originaux de l'utilisateur
     const posts = await Post.findAll({
@@ -130,10 +130,10 @@ exports.getUserPosts = async (req, res) => {
       return new Date(bDate) - new Date(aDate);
     });
 
-    res.json(combinedPosts);
+    return res.json(combinedPosts);
   } catch (error) {
     console.error('Error fetching posts:', error);
-    res.status(500).json({ error: 'Failed to fetch posts' });
+    return res.status(500).json({ error: 'Failed to fetch posts' });
   }
 };
 
@@ -164,10 +164,10 @@ exports.getPost = async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    res.json(post);
+    return res.json(post);
   } catch (error) {
     console.error('Error fetching post with replies:', error);
-    res.status(500).json({ error: 'Failed to fetch post' });
+    return res.status(500).json({ error: 'Failed to fetch post' });
   }
 };
 
@@ -224,11 +224,11 @@ exports.likePost = async (req, res) => {
         }
       }
 
-      res.json({ message: 'Post liked successfully', likes: post.likes, liked: true });
+      return res.json({ message: 'Post liked successfully', likes: post.likes, liked: true });
     }
   } catch (error) {
     console.error('Failed to like post:', error);
-    res.status(500).json({ error: 'Failed to like post' });
+    return res.status(500).json({ error: 'Failed to like post' });
   }
 };
 
@@ -273,7 +273,7 @@ exports.commentPost = async (req, res) => {
     res.status(201).json(parentPost);
   } catch (error) {
     console.error('Failed to add reply:', error);
-    res.status(500).json({ error: 'Failed to add reply' });
+    return res.status(500).json({ error: 'Failed to add reply' });
   }
 };
 
@@ -301,7 +301,7 @@ exports.getPostInfos = async (req, res) => {
     return res.status(201).json({ isLiked, isReposted });
   } catch (error) {
     console.error('Failed to repost:', error);
-    res.status(500).json({ error: 'Failed to repost' });
+    return res.status(500).json({ error: 'Failed to repost' });
   }
 };
 
@@ -353,7 +353,7 @@ exports.repostPost = async (req, res) => {
     return res.status(201).json({ isReposted: true, reposts: originalPost.reposts });
   } catch (error) {
     console.error('Failed to repost:', error);
-    res.status(500).json({ error: 'Failed to repost' });
+    return res.status(500).json({ error: 'Failed to repost' });
   }
 };
 
@@ -392,13 +392,13 @@ exports.createPost = async (req, res) => {
     }
 
     // Retourner une réponse JSON avec le post créé
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Post created successfully',
       post: newPost,
     });
   } catch (error) {
     console.error('Failed to create post:', error);
-    res.status(500).json({ error: 'Failed to create post' });
+    return res.status(500).json({ error: 'Failed to create post' });
   }
 };
 
