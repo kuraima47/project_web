@@ -90,6 +90,7 @@ const getCryptoPricesWithName = async (req, res) => {
   try {
     const { cryptoName } = req.params;  // Récupérer le nom de la crypto à partir des paramètres d'URL
     // Récupérer toutes les cryptos depuis la liste Redis
+    console.log(cryptoName);
     const cachedData = await redisClient.lRange(cacheKey, 0, -1); // Récupère tous les éléments de la liste
 
     // Parcourir la liste et trouver la crypto-monnaie avec le nom spécifié
