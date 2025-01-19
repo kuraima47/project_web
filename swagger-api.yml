@@ -1,0 +1,1414 @@
+openapi: 3.0.0
+info:
+  title: BlockTweet
+  version: 1.0.0
+  description: API pour communiquer avec le serveur. Une authentification est nécessaire , passer en Authorization Bearer votre token
+tags:
+  - name: BlockTweet
+    description: Réseau Social 
+
+paths:
+  /api/cryptos:
+    get:
+      summary: Récupérer les prix de toutes les cryptomonnaies
+      description: Cette route permet de récupérer les prix des cryptomonnaies, en utilisant des données mises en cache dans Redis.
+      tags:
+        - Cryptocurrencies
+      responses:
+        '200':
+          description: Liste des prix des cryptomonnaies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: L'identifiant unique de la cryptomonnaie.
+                    name:
+                      type: string
+                      description: Le nom de la cryptomonnaie.
+                    symbol:
+                      type: string
+                      description: Le symbole de la cryptomonnaie (exemple BTC, ETH).
+                    price:
+                      type: number
+                      description: Le prix actuel de la cryptomonnaie.
+        '500':
+          description: Erreur interne du serveur ou données non disponibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Message d'erreur détaillé.
+  /api/cryptos/{cryptoName}:
+    get:
+      summary: Récupérer les prix d'une cryptomonnaie spécifique
+      description: Cette route permet de récupérer le prix d'une cryptomonnaie spécifique (par exemple "bitcoin") en utilisant des données mises en cache dans Redis.
+      tags:
+        - Cryptocurrencies
+      parameters:
+        - in: path
+          name: cryptoName
+          required: true
+          description: Le nom de la cryptomonnaie (par exemple, "Bitcoin").
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détails de la cryptomonnaie demandée avec son prix.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: L'identifiant unique de la cryptomonnaie.
+                    name:
+                      type: string
+                      description: Le nom de la cryptomonnaie.
+                    symbol:
+                      type: string
+                      description: Le symbole de la cryptomonnaie.
+                    price:
+                      type: number
+                      description: Le prix actuel de la cryptomonnaie.
+        '404':
+          description: Cryptomonnaie non trouvée.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Message d'erreur détaillé.
+        '500':
+          description: Erreur interne du serveur.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Message d'erreur détaillé.
+
+  /api/feed/general:
+    get:
+      summary: Récupérer le feed général d'un utilisateur
+      description: Cette route permet de récupérer le feed général pour un utilisateur authentifié, incluant les posts basés sur ses intérêts.
+      tags:
+        - Feed
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Succès - Retourne la liste des posts dans le feed général
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: L'identifiant unique du post
+                    content:
+                      type: string
+                      description: Le contenu du post
+                    createdAt:
+                      type: string
+                      format: date-time
+                      description: La date et l'heure de la création du post
+                    updatedAt:
+                      type: string
+                      format: date-time
+                      description: La date et l'heure de la dernière mise à jour du post
+                    likes:
+                      type: integer
+                      description: Le nombre de likes du post
+                    reposts:
+                      type: integer
+                      description: Le nombre de reposts du post
+                    hashtags:
+                      type: array
+                      items:
+                        type: string
+                      description: Liste des hashtags associés au post
+        '401':
+          description: Non autorisé - L'utilisateur n'est pas authentifié ou le token est invalide
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Message d'erreur détaillé
+        '404':
+          description: Utilisateur non trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Message d'erreur détaillé
+        '500':
+          description: Erreur interne du serveur
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Message d'erreur détaillé
+  /api/messages/{userId}:
+    post:
+      summary: Envoyer un message à un utilisateur spécifique
+      description: Cette route permet d'envoyer un message à un utilisateur spécifique en utilisant son ID.
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: L'ID de l'utilisateur destinataire du message.
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Le contenu du message.
+      responses:
+        '201':
+          description: Message envoyé avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  content:
+                    type: string
+                  senderId:
+                    type: integer
+                  receiverId:
+                    type: integer
+                  createdAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Requête mal formée, paramètres manquants.
+        '404':
+          description: Utilisateur non trouvé.
+        '500':
+          description: Erreur serveur.
+
+  /api/messages:
+    post:
+      summary: Envoyer un message
+      description: Cette route permet d'envoyer un message entre deux utilisateurs, avec un nom d'utilisateur spécifié dans le corps de la requête.
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Le nom d'utilisateur du destinataire du message.
+                content:
+                  type: string
+                  description: Le contenu du message.
+      responses:
+        '201':
+          description: Message envoyé avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  content:
+                    type: string
+                  senderId:
+                    type: integer
+                  receiverId:
+                    type: integer
+                  createdAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Requête mal formée, nom d'utilisateur ou contenu manquants.
+        '404':
+          description: Utilisateur non trouvé.
+        '500':
+          description: Erreur serveur.
+
+  /api/messages/{conversationId}/markAsSeen:
+    post:
+      summary: Marquer le dernier message d'une conversation comme vu
+      description: Cette route permet de marquer le dernier message d'une conversation comme vu par un utilisateur spécifique.
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          description: L'ID de la conversation.
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Le message a été marqué comme vu.
+        '404':
+          description: Conversation non trouvée.
+        '500':
+          description: Erreur serveur.
+
+  /api/messages/:
+    get:
+      summary: Récupérer toutes les conversations d'un utilisateur
+      description: Cette route permet de récupérer toutes les conversations associées à un utilisateur authentifié.
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des conversations de l'utilisateur.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    conversationId:
+                      type: integer
+                    users:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          username:
+                            type: string
+                          avatar:
+                            type: string
+                    lastMessage:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+                    seenStatus:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          userId:
+                            type: integer
+                          seen:
+                            type: boolean
+        '401':
+          description: Non autorisé - Token invalide ou manquant.
+        '500':
+          description: Erreur serveur.
+
+  /api/messages/{conversationId}/isLastMessageSeen:
+    get:
+      summary: Vérifier si le dernier message d'une conversation a été vu
+      description: Cette route permet de vérifier si le dernier message d'une conversation a été vu par l'autre utilisateur.
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          description: L'ID de la conversation.
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Retourne l'état "vu" du dernier message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  seen:
+                    type: boolean
+        '404':
+          description: Conversation ou message introuvable.
+        '500':
+          description: Erreur serveur.
+
+  /api/messages/{conversationId}:
+    get:
+      summary: Récupérer les messages d'une conversation spécifique
+      description: Cette route permet de récupérer tous les messages d'une conversation spécifique.
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          description: L'ID de la conversation.
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Détails de la conversation avec les messages associés.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversationId:
+                    type: integer
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        username:
+                          type: string
+                        avatar:
+                          type: string
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        content:
+                          type: string
+                        senderId:
+                          type: integer
+                        receiverId:
+                          type: integer
+                        createdAt:
+                          type: string
+                          format: date-time
+        '404':
+          description: Conversation introuvable.
+        '500':
+          description: Erreur serveur.
+  /api/notifications:
+    get:
+      summary: Récupérer toutes les notifications d'un utilisateur
+      description: Cette route permet de récupérer toutes les notifications d'un utilisateur authentifié.
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des notifications de l'utilisateur.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    message:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    isRead:
+                      type: boolean
+        '401':
+          description: Non autorisé - Token invalide ou manquant.
+        '500':
+          description: Erreur serveur.
+
+  /api/notifications/unread:
+    get:
+      summary: Récupérer les notifications non lues
+      description: Cette route permet de récupérer toutes les notifications non lues d'un utilisateur authentifié.
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des notifications non lues.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    message:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    isRead:
+                      type: boolean
+        '401':
+          description: Non autorisé - Token invalide ou manquant.
+        '500':
+          description: Erreur serveur.
+
+  /api/notifications/read/{id}:
+    put:
+      summary: Marquer une notification comme lue
+      description: Cette route permet de marquer une notification spécifique comme lue.
+      tags:
+        - Notifications
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: L'ID de la notification à marquer comme lue.
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notification marquée comme lue avec succès.
+        '400':
+          description: Notification introuvable ou déjà lue.
+        '404':
+          description: Notification non trouvée.
+        '500':
+          description: Erreur serveur.
+
+  /api/notifications/all/read:
+    put:
+      summary: Marquer toutes les notifications comme lues
+      description: Cette route permet de marquer toutes les notifications de l'utilisateur authentifié comme lues.
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Toutes les notifications ont été marquées comme lues.
+        '500':
+          description: Erreur serveur.
+  /api/pixelwar:
+    post:
+      summary: Poser un pixel
+      description: Cette route permet à un utilisateur de poser un pixel sur la grille du Pixel War.
+      tags:
+        - Pixel War
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                x:
+                  type: integer
+                  description: Coordonnée X du pixel.
+                y:
+                  type: integer
+                  description: Coordonnée Y du pixel.
+                color:
+                  type: string
+                  description: Couleur du pixel (ex. #FF5733).
+      responses:
+        '201':
+          description: Pixel posé avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  pixel:
+                    type: object
+                    properties:
+                      x:
+                        type: integer
+                      y:
+                        type: integer
+                      color:
+                        type: string
+                      userId:
+                        type: integer
+                      timestamp:
+                        type: string
+                        format: date-time
+        '400':
+          description: Données invalides ou trop de pixels posés récemment.
+        '401':
+          description: Non autorisé - Token invalide ou manquant.
+        '500':
+          description: Erreur serveur.
+
+  /api/pixelwar/:
+    get:
+      summary: Récupérer tous les pixels
+      description: Cette route permet de récupérer tous les pixels posés sur la grille du Pixel War.
+      tags:
+        - Pixel War
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des pixels posés.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    x:
+                      type: integer
+                    y:
+                      type: integer
+                    color:
+                      type: string
+                    userId:
+                      type: integer
+                    timestamp:
+                      type: string
+                      format: date-time
+        '401':
+          description: Non autorisé - Token invalide ou manquant.
+        '500':
+          description: Erreur serveur.
+  /api/posts:
+    get:
+      summary: Récupérer tous les posts
+      description: Cette route permet de récupérer tous les posts racines (non commentés).
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des posts récupérés avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    content:
+                      type: string
+                    media:
+                      type: string
+                    authorId:
+                      type: integer
+                    createdAt:
+                      type: string
+                      format: date-time
+                    responses:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          content:
+                            type: string
+                    Hashtags:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+        '500':
+          description: Erreur serveur.
+
+  /api/posts/{id}:
+    get:
+      summary: Récupérer un post spécifique
+      description: Cette route permet de récupérer un post par son ID, ainsi que ses réponses (commentaires).
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du post à récupérer.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post récupéré avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  content:
+                    type: string
+                  media:
+                    type: string
+                  authorId:
+                    type: integer
+                  createdAt:
+                    type: string
+                    format: date-time
+                  responses:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        content:
+                          type: string
+                  Hashtags:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+        '404':
+          description: Post non trouvé.
+        '500':
+          description: Erreur serveur.
+
+  /api/posts/infos/{id}:
+    get:
+      summary: Récupérer les informations liées à un post
+      description: Cette route permet de récupérer les informations supplémentaires sur un post (likes, reposts).
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du post à vérifier.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Informations du post récupérées avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isLiked:
+                    type: boolean
+                  isReposted:
+                    type: boolean
+        '404':
+          description: Post non trouvé.
+        '500':
+          description: Erreur serveur.
+
+  /api/posts/user/{address}:
+    get:
+      summary: Récupérer les posts d'un utilisateur
+      description: Cette route permet de récupérer tous les posts et reposts d'un utilisateur spécifié par son adresse.
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: address
+          in: path
+          required: true
+          description: Adresse de l'utilisateur.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Posts de l'utilisateur récupérés avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    content:
+                      type: string
+                    media:
+                      type: string
+                    authorId:
+                      type: integer
+                    createdAt:
+                      type: string
+                      format: date-time
+                    responses:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          content:
+                            type: string
+                    Hashtags:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+        '404':
+          description: Utilisateur non trouvé.
+        '500':
+          description: Erreur serveur.
+
+  /api/posts/:
+    post:
+      summary: Créer un post
+      description: Cette route permet à un utilisateur de créer un nouveau post.
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Contenu du post.
+                media:
+                  type: string
+                  format: binary
+                  description: Media (optionnel) attaché au post.
+      responses:
+        '201':
+          description: Post créé avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  content:
+                    type: string
+                  media:
+                    type: string
+                  authorId:
+                    type: integer
+                  createdAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Données invalides.
+        '500':
+          description: Erreur serveur.
+
+  /api/posts/{id}/like:
+    post:
+      summary: Aimer un post
+      description: Cette route permet à un utilisateur d'aimer un post.
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du post à aimer.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post aimé avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  likes:
+                    type: integer
+                  liked:
+                    type: boolean
+        '404':
+          description: Post non trouvé.
+        '500':
+          description: Erreur serveur.
+
+  /api/posts/{id}/comment:
+    post:
+      summary: Commenter un post
+      description: Cette route permet à un utilisateur de commenter un post.
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du post auquel commenter.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Contenu du commentaire.
+                media:
+                  type: string
+                  format: binary
+                  description: Media (optionnel) attaché au commentaire.
+      responses:
+        '201':
+          description: Commentaire ajouté avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  content:
+                    type: string
+                  media:
+                    type: string
+                  authorId:
+                    type: integer
+                  createdAt:
+                    type: string
+                    format: date-time
+        '404':
+          description: Post non trouvé.
+        '500':
+          description: Erreur serveur.
+
+  /api/posts/{id}/repost:
+    post:
+      summary: Reposter un post
+      description: Cette route permet à un utilisateur de reposter un post.
+      tags:
+        - Posts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du post à reposter.
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Post reposté avec succès.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isReposted:
+                    type: boolean
+                  reposts:
+                    type: integer
+        '404':
+          description: Post non trouvé.
+        '500':
+          description: Erreur serveur.
+  /api/search:
+    get:
+      summary: Recherche dans les utilisateurs, posts ou hashtags
+      description: Cette route permet de rechercher des utilisateurs, des posts ou des hashtags en fonction du terme de recherche et du type.
+      operationId: search
+      tags:
+        - Search
+      parameters:
+        - in: query
+          name: term
+          required: true
+          schema:
+            type: string
+          description: Le terme de recherche à rechercher dans le contenu des posts, le nom d'utilisateur ou le nom du hashtag.
+        - in: query
+          name: type
+          required: false
+          schema:
+            type: string
+            enum:
+              - all
+              - user
+              - post
+              - hashtag
+            default: all
+          description: Le type de recherche (par défaut, recherche tous les types).
+      responses:
+        '200':
+          description: Résultats de la recherche
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/UserResult'
+                    - $ref: '#/components/schemas/PostResult'
+                    - $ref: '#/components/schemas/HashtagResult'
+        '400':
+          description: Paramètres de recherche invalides
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Term is required"
+        '500':
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An error occurred while searching"
+  /api/users/auth:
+    post:
+      summary: Authentifier un utilisateur avec une signature
+      description: Permet d'authentifier un utilisateur via une signature Ethereum.
+      operationId: authenticate
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                  example: "0x1234567890abcdef"
+                signature:
+                  type: string
+                  example: "0x..."
+                message:
+                  type: string
+                  example: "Login to MyApp"
+      responses:
+        '200':
+          description: Utilisateur authentifié avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    example: "jwt_token"
+        '401':
+          description: Signature invalide
+        '500':
+          description: Erreur lors de l'authentification
+
+  /api/users/register:
+    post:
+      summary: Enregistrer un utilisateur
+      description: Permet d'enregistrer un utilisateur avec un username, avatar et bio.
+      operationId: register
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                  example: "0x1234567890abcdef"
+                username:
+                  type: string
+                  example: "john_doe"
+                avatar:
+                  type: string
+                  example: "https://example.com/avatar.jpg"
+                bio:
+                  type: string
+                  example: "Blockchain enthusiast"
+      responses:
+        '200':
+          description: Utilisateur enregistré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Utilisateur non trouvé
+        '500':
+          description: Erreur lors de l'enregistrement
+
+  /api/users/profile/{address}:
+    get:
+      summary: Récupérer le profil d'un utilisateur
+      description: Permet de récupérer les informations d'un utilisateur à partir de son adresse Ethereum.
+      operationId: getProfile
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+            example: "0x1234567890abcdef"
+      responses:
+        '200':
+          description: Profil récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Utilisateur non trouvé
+        '500':
+          description: Erreur lors de la récupération du profil
+
+  /api/users/fromToken:
+    get:
+      summary: Récupérer l'utilisateur à partir du token JWT
+      description: Permet de récupérer les informations de l'utilisateur en utilisant un token JWT.
+      operationId: getFromToken
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Utilisateur récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Token invalide
+        '500':
+          description: Erreur lors de la récupération de l'utilisateur
+
+  /api/users/update:
+    put:
+      summary: Mettre à jour le profil de l'utilisateur
+      description: Permet de mettre à jour le profil de l'utilisateur (username, avatar, bio).
+      operationId: updateProfile
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "john_doe_updated"
+                avatar:
+                  type: string
+                  example: "https://example.com/new_avatar.jpg"
+                bio:
+                  type: string
+                  example: "Updated bio"
+      responses:
+        '200':
+          description: Profil mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Nom d'utilisateur déjà existant
+        '404':
+          description: Utilisateur non trouvé
+        '500':
+          description: Erreur lors de la mise à jour du profil
+
+  /api/users/{address}/follow:
+    post:
+      summary: Suivre un utilisateur
+      description: Permet à un utilisateur de suivre un autre utilisateur par adresse Ethereum.
+      operationId: followUser
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+            example: "0x1234567890abcdef"
+      responses:
+        '200':
+          description: Suivi réussi
+        '400':
+          description: Impossible de se suivre soi-même
+        '404':
+          description: Utilisateur à suivre non trouvé
+        '500':
+          description: Erreur interne du serveur
+
+  /api/users/{address}/unfollow:
+    delete:
+      summary: Ne plus suivre un utilisateur
+      description: Permet à un utilisateur de ne plus suivre un autre utilisateur.
+      operationId: unfollowUser
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+            example: "0x1234567890abcdef"
+      responses:
+        '200':
+          description: Ne plus suivre l'utilisateur avec succès
+        '400':
+          description: Impossible de se désabonner soi-même
+        '404':
+          description: Utilisateur à ne plus suivre non trouvé
+        '500':
+          description: Erreur interne du serveur
+
+  /api/users/{address}/followers:
+    get:
+      summary: Obtenir les followers d'un utilisateur
+      description: Permet de récupérer la liste des followers d'un utilisateur.
+      operationId: getFollowers
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+            example: "0x1234567890abcdef"
+      responses:
+        '200':
+          description: Liste des followers récupérée avec succès
+        '404':
+          description: Utilisateur non trouvé
+        '500':
+          description: Erreur interne du serveur
+
+  /api/users/{address}/following:
+    get:
+      summary: Obtenir les utilisateurs suivis
+      description: Permet de récupérer la liste des utilisateurs suivis par un utilisateur.
+      operationId: getFollowing
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+            example: "0x1234567890abcdef"
+      responses:
+        '200':
+          description: Liste des utilisateurs suivis récupérée avec succès
+        '404':
+          description: Utilisateur non trouvé
+        '500':
+          description: Erreur interne du serveur
+
+  /api/users/{address}/dofollow:
+    get:
+      summary: Vérifier si l'utilisateur suit un autre utilisateur
+      description: Permet de vérifier si l'utilisateur connecté suit un autre utilisateur par adresse.
+      operationId: doFollow
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+            example: "0x1234567890abcdef"
+      responses:
+        '200':
+          description: Résultat de la vérification de suivi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isFollowing:
+                    type: boolean
+                    example: true
+        '404':
+          description: Utilisateur non trouvé
+        '500':
+          description: Erreur interne du serveur
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserResult:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "user"
+        id:
+          type: integer
+          example: 123
+        address:
+          type: string
+          example: "0x12345abcdef"
+        username:
+          type: string
+          example: "john_doe"
+        avatar:
+          type: string
+          example: "https://example.com/avatar.jpg"
+        bio:
+          type: string
+          example: "Blockchain enthusiast"
+    PostResult:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "post"
+        id:
+          type: integer
+          example: 456
+        content:
+          type: string
+          example: "Exploring the future of blockchain"
+        username:
+          type: string
+          example: "john_doe"
+        avatar:
+          type: string
+          example: "https://example.com/avatar.jpg"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-19T14:00:00Z"
+    HashtagResult:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "hashtag"
+        name:
+          type: string
+          example: "blockchain"
+        count:
+          type: integer
+          example: 120
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        address:
+          type: string
+          example: "0x1234567890abcdef"
+        username:
+          type: string
+          example: "john_doe"
+        avatar:
+          type: string
+          example: "https://example.com/avatar.jpg"
+        bio:
+          type: string
+          example: "Blockchain enthusiast"
+        interests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interest'
+    Interest:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "blockchain"

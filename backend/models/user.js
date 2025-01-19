@@ -4,8 +4,8 @@ const sequelize = require('../config/database');
 
 // Import du modèle de jointure
 const UserFollows = require('./userFollow');
-const UserInterest = require('./UserInterest');
-const Interest = require('./Interest');
+const UserInterest = require('./userInterest');
+const Interest = require('./interest');
 
 const User = sequelize.define('User', {
   id: {

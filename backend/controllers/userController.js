@@ -3,12 +3,21 @@
 const { ethers } = require('ethers');
 const User = require('../models/user');
 const Notification = require('../models/notification');
-const Interest = require('../models/Interest');
-const UserInterest = require('../models/UserInterest')
+const Interest = require('../models/interest');
+const UserInterest = require('../models/userInterest')
 const UserFollows = require('../models/userFollow');
 const jwt = require('jsonwebtoken');
 const { createNotification } = require('../services/notificationService');
 
+/**
+ * Authentifie un utilisateur en vérifiant sa signature et adresse.
+ * Si l'utilisateur n'existe pas, il est créé.
+ * Génère et retourne un token JWT pour l'utilisateur.
+ * 
+ * @param {Object} req - La requête contenant l'adresse, la signature et le message.
+ * @param {Object} res - La réponse avec l'utilisateur et le token JWT.
+ * @returns {Object} Réponse JSON contenant l'utilisateur et le token.
+ */
 exports.authenticate = async (req, res) => {
   const { address, signature, message } = req.body;
 
@@ -45,6 +54,13 @@ exports.authenticate = async (req, res) => {
   }
 };
 
+/**
+ * Enregistre un utilisateur en mettant à jour son nom d'utilisateur, son avatar et sa bio.
+ * 
+ * @param {Object} req - La requête contenant l'adresse, le nom d'utilisateur, l'avatar et la bio.
+ * @param {Object} res - La réponse avec l'utilisateur mis à jour.
+ * @returns {Object} Réponse JSON avec l'utilisateur mis à jour.
+ */
 exports.register = async (req, res) => {
   const { address, username, avatar, bio } = req.body;
   try {
@@ -65,7 +81,13 @@ exports.register = async (req, res) => {
   }
 };
 
-
+/**
+ * Récupère l'utilisateur à partir du token JWT envoyé dans les en-têtes d'autorisation.
+ * 
+ * @param {Object} req - La requête contenant le token JWT dans l'en-tête d'autorisation.
+ * @param {Object} res - La réponse avec l'utilisateur récupéré.
+ * @returns {Object} Réponse JSON contenant l'utilisateur.
+ */
 exports.getFromToken = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -86,6 +108,13 @@ exports.getFromToken = async (req, res) => {
   res.status(200).json(user);
 }
 
+/**
+ * Récupère le profil d'un utilisateur à partir de son adresse.
+ * 
+ * @param {Object} req - La requête contenant l'adresse de l'utilisateur dans les paramètres.
+ * @param {Object} res - La réponse avec les informations du profil utilisateur.
+ * @returns {Object} Réponse JSON avec les informations de l'utilisateur.
+ */
 exports.getProfile = async (req, res) => {
   const { address } = req.params;
   try {
@@ -114,6 +143,13 @@ exports.getProfile = async (req, res) => {
 };
 
 
+/**
+ * Met à jour le profil d'un utilisateur (nom d'utilisateur, avatar, bio).
+ * 
+ * @param {Object} req - La requête contenant le nom d'utilisateur, l'avatar et la bio à mettre à jour.
+ * @param {Object} res - La réponse avec l'utilisateur mis à jour.
+ * @returns {Object} Réponse JSON contenant l'utilisateur mis à jour.
+ */
 exports.updateProfile = async (req, res) => {
   const { username, avatar, bio } = req.body;
   const userId = req.user.id; // Récupéré depuis le token décodé
@@ -143,9 +179,13 @@ exports.updateProfile = async (req, res) => {
     return res.status(500).json({ error: 'Failed to update profile' });
   }
 };
+
 /**
- * @route POST /api/users/:id/follow
- * L'utilisateur connecté (req.user) suit l'utilisateur :id
+ * Permet à l'utilisateur connecté de suivre un autre utilisateur.
+ * 
+ * @param {Object} req - La requête contenant l'adresse de l'utilisateur à suivre dans les paramètres.
+ * @param {Object} res - La réponse avec un message de confirmation.
+ * @returns {Object} Réponse JSON avec un message de succès.
  */
 exports.followUser = async (req, res) => {
   try {
@@ -206,8 +246,11 @@ exports.followUser = async (req, res) => {
 };
 
 /**
- * @route DELETE /api/users/:id/unfollow
- * L'utilisateur connecté arrête de suivre l'utilisateur :id
+ * Permet à l'utilisateur connecté d'arrêter de suivre un autre utilisateur.
+ * 
+ * @param {Object} req - La requête contenant l'adresse de l'utilisateur à ne plus suivre dans les paramètres.
+ * @param {Object} res - La réponse avec un message de confirmation.
+ * @returns {Object} Réponse JSON avec un message de succès.
  */
 exports.unfollowUser = async (req, res) => {
   try {
@@ -239,8 +282,11 @@ exports.unfollowUser = async (req, res) => {
 };
 
 /**
- * @route GET /api/users/:id/followers
- * Récupère la liste des followers de l'utilisateur :id
+ * Récupère la liste des followers d'un utilisateur donné.
+ * 
+ * @param {Object} req - La requête contenant l'adresse de l'utilisateur dans les paramètres.
+ * @param {Object} res - La réponse avec la liste des followers.
+ * @returns {Object} Réponse JSON avec la liste des followers.
  */
 exports.getFollowers = async (req, res) => {
   try {
@@ -265,8 +311,11 @@ exports.getFollowers = async (req, res) => {
 };
 
 /**
- * @route GET /api/users/:address/following
- * Récupère la liste des utilisateurs suivis par l'utilisateur :adress
+ * Récupère la liste des utilisateurs suivis par un utilisateur donné.
+ * 
+ * @param {Object} req - La requête contenant l'adresse de l'utilisateur dans les paramètres.
+ * @param {Object} res - La réponse avec la liste des utilisateurs suivis.
+ * @returns {Object} Réponse JSON avec la liste des utilisateurs suivis.
  */
 exports.getFollowing = async (req, res) => {
   try {
@@ -297,6 +346,13 @@ exports.getFollowing = async (req, res) => {
   }
 };
 
+/**
+ * Vérifie si un utilisateur suit un autre utilisateur.
+ * 
+ * @param {Object} req - La requête contenant l'adresse de l'utilisateur à vérifier dans les paramètres.
+ * @param {Object} res - La réponse indiquant si l'utilisateur suit l'autre utilisateur.
+ * @returns {Object} Réponse JSON avec un booléen `isFollowing`.
+ */
 exports.doFollow = async (req, res) => {
   try {
     const launcherUser = req.user;

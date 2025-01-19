@@ -8,6 +8,14 @@ const Repost = require('../models/repost');
 const Hashtag = require('../models/hashtag');
 const { createNotification } = require('../services/notificationService');
 
+/**
+ * Récupère tous les posts racines (sans parent) triés par date de création.
+ * Inclut l'auteur, les réponses, et les hashtags associés.
+ * 
+ * @param {Object} req - Requête HTTP (aucune donnée nécessaire).
+ * @param {Object} res - Réponse HTTP contenant la liste des posts.
+ * @returns {Object} - Réponse JSON avec tous les posts.
+ */
 exports.getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
@@ -40,21 +48,27 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
-
+/**
+ * Récupère les posts de l'utilisateur spécifié par son adresse.
+ * Inclut les posts originaux ainsi que les reposts.
+ * 
+ * @param {Object} req - Requête HTTP contenant l'adresse de l'utilisateur dans les paramètres.
+ * @param {Object} res - Réponse HTTP contenant la liste des posts de l'utilisateur.
+ * @returns {Object} - Réponse JSON avec tous les posts de l'utilisateur, originaux et repostés.
+ */
 exports.getUserPosts = async (req, res) => {
   const { address } = req.params;
-  const userId = req.user.id; // Utilisateur actuel qui effectue la demande
+  const userId = req.user.id;
 
   try {
+    const userToCheck = await User.findOne({ where: { address } });
 
+    if (!userToCheck)
+      res.status(404).json({ error: 'Utilisateur introuvable avec l\'adresse spécifiée' });
 
-    const userToCheck = await User.findOne({where: { address: address }})
-
-    if(!userToCheck)
-      res.status(404).json({ error: 'Utilisateur introuvable avec ladresse spécifiée' });
-    // Étape 1 : Récupérer les posts originaux de l'utilisateur spécifié
+    // Récupérer les posts originaux de l'utilisateur
     const posts = await Post.findAll({
-      where: { '$author.address$': address, parentPostId: null }, // Ne récupérer que les posts racines
+      where: { '$author.address$': address, parentPostId: null },
       include: [
         {
           model: User,
@@ -76,8 +90,7 @@ exports.getUserPosts = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
-
-    // Étape 2 : Récupérer les reposts faits par l'utilisateur
+    // Récupérer les reposts de l'utilisateur
     const reposts = await Post.findAll({
       include: [
         {
@@ -99,24 +112,22 @@ exports.getUserPosts = async (req, res) => {
         {
           model: User,
           as: 'repostedBy',
-          through: { attributes: ['createdAt'] }, // Récupère la date de repost depuis la table Repost
+          through: { attributes: ['createdAt'] },
           attributes: ['id', 'username', 'avatar'],
         },
       ],
-      where: { '$repostedBy.id$': userToCheck.id }, // Récupérer les posts où l'utilisateur actuel a reposté
+      where: { '$repostedBy.id$': userToCheck.id },
     });
 
-    // Ajouter la date de repost (createdAt) dans les reposts
     reposts.forEach((repost) => {
-      repost.repostDate = repost.repostedBy[0].Repost.createdAt; // Accède à la date de repost
+      repost.repostDate = repost.repostedBy[0].Repost.createdAt;
     });
 
-    // Étape 3 : Combiner les posts originaux et les reposts
-    // On peut concaténer les deux tableaux de posts et trier par la date de création ou de repost.
+    // Combiner les posts originaux et les reposts et les trier
     const combinedPosts = [...posts, ...reposts].sort((a, b) => {
-      const aDate = a.repostDate || a.createdAt; // Utilise la date du repost si présente, sinon la date de création du post
+      const aDate = a.repostDate || a.createdAt;
       const bDate = b.repostDate || b.createdAt;
-      return new Date(bDate) - new Date(aDate); // Trie du plus récent au plus ancien
+      return new Date(bDate) - new Date(aDate);
     });
 
     res.json(combinedPosts);
@@ -126,7 +137,13 @@ exports.getUserPosts = async (req, res) => {
   }
 };
 
-
+/**
+ * Récupère un post par son ID, avec ses réponses (s'il y en a).
+ * 
+ * @param {Object} req - Requête HTTP contenant l'ID du post dans les paramètres.
+ * @param {Object} res - Réponse HTTP contenant le post et ses réponses.
+ * @returns {Object} - Réponse JSON avec le post et ses réponses.
+ */
 exports.getPost = async (req, res) => {
   const { id } = req.params;
 
@@ -154,6 +171,13 @@ exports.getPost = async (req, res) => {
   }
 };
 
+/**
+ * Permet à un utilisateur de liker un post. Si l'utilisateur a déjà liké, cela le retire.
+ * 
+ * @param {Object} req - Requête HTTP contenant l'ID du post à liker dans les paramètres.
+ * @param {Object} res - Réponse HTTP contenant l'état du like du post.
+ * @returns {Object} - Réponse JSON avec le message de succès et le nombre de likes mis à jour.
+ */
 exports.likePost = async (req, res) => {
   const { id } = req.params;
   try {
@@ -163,52 +187,42 @@ exports.likePost = async (req, res) => {
     }
 
     const likedBy = await post.getLikedBy();
-    const isLikedBy = likedBy.some(user => user.id === req.user.id)
+    const isLikedBy = likedBy.some(user => user.id === req.user.id);
 
-    if(isLikedBy) {
+    if (isLikedBy) {
       await post.removeLikedBy(req.user);
       post.likes -= 1;
       await post.save();
-      res.json({ message: 'Post unliked successfully', likes: post.likes, liked:false });
+      res.json({ message: 'Post unliked successfully', likes: post.likes, liked: false });
     } else {
       await post.addLikedBy(req.user);
       post.likes += 1;
       await post.save();
-      await createNotification('like',post.authorId,req.user.id,post.id);
+      await createNotification('like', post.authorId, req.user.id, post.id);
 
-        // 3) Récupérer les hashtags liés au post
-        const hashtags = await post.getHashtags();  // => ex: [ { name: 'blockchain' }, ... ]
+      const hashtags = await post.getHashtags();
+      for (const hashtag of hashtags) {
+        const interestName = hashtag.name.toLowerCase();
+        const [interest] = await Interest.findOrCreate({
+          where: { name: interestName },
+          defaults: { name: interestName }
+        });
 
-        // 4) Pour chaque hashtag, faire un findOrCreate dans Interests,
-        //    puis incrémenter le score de l'utilisateur dans UserInterest
-        for (const hashtag of hashtags) {
-            const interestName = hashtag.name.toLowerCase();
-            const [interest] = await Interest.findOrCreate({
-                where: { name: interestName },
-                defaults: { name: interestName }
-            });
+        let userInterest = await UserInterest.findOne({
+          where: { userId: req.user.id, interestId: interest.id }
+        });
 
-            // Vérifier si on a déjà une entrée (userId, interestId)
-            let userInterest = await UserInterest.findOne({
-                where: {
-                    userId: req.user.id,
-                    interestId: interest.id
-                }
-            });
-
-            if (!userInterest) {
-                // Pas encore d'entrée -> on crée avec un score de base
-                userInterest = await UserInterest.create({
-                    userId: req.user.id,
-                    interestId: interest.id,
-                    score: 1 // Première interaction
-                });
-            } else {
-                // On incrémente le score existant
-                userInterest.score += 1;
-                await userInterest.save();
-            }
+        if (!userInterest) {
+          userInterest = await UserInterest.create({
+            userId: req.user.id,
+            interestId: interest.id,
+            score: 1
+          });
+        } else {
+          userInterest.score += 1;
+          await userInterest.save();
         }
+      }
 
       res.json({ message: 'Post liked successfully', likes: post.likes, liked: true });
     }
@@ -218,8 +232,15 @@ exports.likePost = async (req, res) => {
   }
 };
 
+/**
+ * Permet à un utilisateur de commenter un post. Le commentaire peut contenir du texte et un média.
+ * 
+ * @param {Object} req - Requête HTTP contenant l'ID du post à commenter dans les paramètres et le contenu du commentaire dans le corps.
+ * @param {Object} res - Réponse HTTP contenant le post original après le commentaire.
+ * @returns {Object} - Réponse JSON avec le post original après l'ajout du commentaire.
+ */
 exports.commentPost = async (req, res) => {
-  const { id } = req.params; // ID du post parent
+  const { id } = req.params;
   const { content } = req.body;
   const media = req.file ? req.file.filename : null;
 
@@ -235,6 +256,7 @@ exports.commentPost = async (req, res) => {
         },
       ],
     });
+
     if (!parentPost) {
       return res.status(404).json({ error: 'Parent post not found' });
     }
@@ -246,7 +268,7 @@ exports.commentPost = async (req, res) => {
       parentPostId: parentPost.id,
     });
 
-    await createNotification('comment',parentPost.authorId,req.user.id,parentPost.id,comment.id);
+    await createNotification('comment', parentPost.authorId, req.user.id, parentPost.id, comment.id);
 
     res.status(201).json(parentPost);
   } catch (error) {
@@ -255,8 +277,14 @@ exports.commentPost = async (req, res) => {
   }
 };
 
-
-exports.getPostInfos =  async (req, res) => {
+/**
+ * Récupère les informations sur un post, notamment si l'utilisateur l'a liké ou reposté.
+ * 
+ * @param {Object} req - Requête HTTP contenant l'ID du post dans les paramètres.
+ * @param {Object} res - Réponse HTTP contenant les informations sur le post.
+ * @returns {Object} - Réponse JSON avec les informations sur le like et le repost.
+ */
+exports.getPostInfos = async (req, res) => {
   const { id } = req.params;
   try {
     const isReposted = await Repost.findOne({
@@ -268,15 +296,22 @@ exports.getPostInfos =  async (req, res) => {
 
     const existingLike = await Post.findByPk(id);
     const likedBy = await existingLike.getLikedBy();
-    const isLiked = likedBy.some(user => user.id === req.user.id)
+    const isLiked = likedBy.some(user => user.id === req.user.id);
 
-    return res.status(201).json({isLiked:isLiked, isReposted:isReposted});
+    return res.status(201).json({ isLiked, isReposted });
   } catch (error) {
     console.error('Failed to repost:', error);
     res.status(500).json({ error: 'Failed to repost' });
   }
-}
+};
 
+/**
+ * Permet à un utilisateur de reposté un post existant.
+ * 
+ * @param {Object} req - Requête HTTP contenant l'ID du post à reposté dans les paramètres.
+ * @param {Object} res - Réponse HTTP contenant le post reposté.
+ * @returns {Object} - Réponse JSON avec le message de succès et les informations sur le repost.
+ */
 exports.repostPost = async (req, res) => {
   const { id } = req.params;
   try {
@@ -322,43 +357,48 @@ exports.repostPost = async (req, res) => {
   }
 };
 
-
+/**
+ * Permet de créer un nouveau post.
+ * Le post peut contenir du texte, un média, et des hashtags. 
+ * Les hashtags sont ajoutés ou créés dans la base de données si nécessaire.
+ * 
+ * @param {Object} req - Requête HTTP contenant les informations du post dans le corps.
+ * @param {Object} res - Réponse HTTP contenant le post créé.
+ * @returns {Object} - Réponse JSON avec le message de succès et le post créé.
+ */
 exports.createPost = async (req, res) => {
-  const { content } = req.body;
+  const { content, hashtags, parentPostId } = req.body;
   const media = req.file ? req.file.filename : null;
 
   try {
-    const user = await User.findByPk(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const post = await Post.create({
+    // Créer le nouveau post
+    const newPost = await Post.create({
       content,
       media,
-      authorId: user.id, // on utilise authorId
+      authorId: req.user.id,
+      parentPostId: parentPostId || null, // Si le post est une réponse, on utilise parentPostId
     });
 
-    // Extract hashtags from content
-    const hashtags = content.match(/#\w+/g) || [];
-    for (let tag of hashtags) {
-      tag = tag.slice(1).toLowerCase();
-      const [hashtag] = await Hashtag.findOrCreate({ where: { name: tag } });
-      await post.addHashtag(hashtag);
+    // Ajouter les hashtags au post
+    if (hashtags && hashtags.length > 0) {
+      for (const hashtagName of hashtags) {
+        const hashtag = await Hashtag.findOrCreate({
+          where: { name: hashtagName.toLowerCase() }, // Trouver ou créer le hashtag
+        });
+
+        // Associer le hashtag au post
+        await newPost.addHashtag(hashtag[0]);
+      }
     }
 
-    const fullPost = await Post.findByPk(post.id, {
-      include: [
-        { model: User, as: 'author', attributes: ['id', 'username', 'avatar'] },
-        { model: Hashtag, attributes: ['name'], through: { attributes: [] } }
-      ],
+    // Retourner une réponse JSON avec le post créé
+    res.status(201).json({
+      message: 'Post created successfully',
+      post: newPost,
     });
-
-    res.status(201).json(fullPost);
   } catch (error) {
-    console.error('Error creating post:', error);
+    console.error('Failed to create post:', error);
     res.status(500).json({ error: 'Failed to create post' });
   }
-
 };
 
