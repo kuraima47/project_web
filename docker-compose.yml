@@ -9,6 +9,7 @@ services:
       - ./backend:/usr/src/app
     depends_on:
       - redis
+      - postgres
     environment:
       - DATABASE_URL=postgresql://root:root@postgres:5432/blocktweet_db
       - NODE_ENV=production
