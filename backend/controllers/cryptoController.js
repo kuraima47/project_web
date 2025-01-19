@@ -115,4 +115,34 @@ const getCryptoPricesWithName = async (req, res) => {
   }
 };
 
-module.exports = { getCryptoPrices, getCryptoPricesWithName };
+const getCryptoSparkline = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cachedData = await redisClient.lRange(cacheKey, 0, -1); // Récupère tous les éléments
+    const prices = [];
+    
+    // Parcourir les données en cache pour extraire les prix
+    for (const item of cachedData) {
+      const data = JSON.parse(item);
+      const crypto = data.data.find(c => c.id === parseInt(id));
+      if (crypto) {
+        prices.push(crypto.quote.USD.price);
+      }
+    }
+
+    // Limiter à 7 points de données pour la sparkline
+    const sparklineData = prices.slice(-7);
+    
+    res.json(sparklineData);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données sparkline:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+};
+
+module.exports = {
+  fetchAndStoreCryptoPrices,
+  getCryptoPrices,
+  getCryptoPricesWithName,
+  getCryptoSparkline
+};
