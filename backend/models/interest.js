@@ -20,4 +20,6 @@ const Interest = sequelize.define('Interest', {
     timestamps: false,      // si tu n’as pas besoin de createdAt/updatedAt
 });
 
+
+
 module.exports = Interest;

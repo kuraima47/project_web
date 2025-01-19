@@ -1,11 +1,8 @@
 // controllers/userController.js
 
 const { ethers } = require('ethers');
-const User = require('../models/user');
-const Notification = require('../models/notification');
-const Interest = require('../models/interest');
-const UserInterest = require('../models/userInterest')
-const UserFollows = require('../models/userFollow');
+const { User,Notification,Interest,UserInterest,UserFollows} = require('../models');
+
 const jwt = require('jsonwebtoken');
 const { createNotification } = require('../services/notificationService');
 

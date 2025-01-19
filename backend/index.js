@@ -23,6 +23,8 @@ const feedRoutes = require('./routes/feedRoutes'); // Routes pour le fil d'actua
 // Import des modèles
 const User = require('./models/user'); // Modèle utilisateur
 const UserFollows = require('./models/userFollow'); // Modèle pour les relations utilisateur (suivi)
+const UserInterest = require('./models/userInterest'); // Modèle pour les intérêts utilisateur
+const Interest = require('./models/interest'); // Modèle pour les intérêts
 const Post = require('./models/post'); // Modèle pour les publications
 const Notification = require('./models/notification'); // Modèle pour les notifications
 const Hashtag = require('./models/hashtag'); // Modèle pour les hashtags

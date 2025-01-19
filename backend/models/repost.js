@@ -14,9 +14,7 @@ const Repost = sequelize.define('Repost', {
     },
   }, { timestamps: true });
   
-  // Relation avec les utilisateurs et les posts
-  User.belongsToMany(Post, { through: Repost, foreignKey: 'userId', as: 'repostedPosts' });
-  Post.belongsToMany(User, { through: Repost, foreignKey: 'postId', as: 'repostedBy' });
+
   
   module.exports = Repost;
   

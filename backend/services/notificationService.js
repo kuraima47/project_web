@@ -1,8 +1,7 @@
 // services/notificationService.js
 
-const Notification = require('../models/notification');
-const User = require('../models/user');
-const Post = require('../models/post');
+const {Notification,User,Post} = require('../models');
+
 const { getIoNotifications } = require('../socket');
 const { getSocketIdFromUserId } = require('../websockets/notifications');
 

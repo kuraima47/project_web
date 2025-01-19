@@ -1,25 +1,30 @@
 // services/feedService.js
-
-const { Op } = require('sequelize');
-const Post = require('../models/post');
-const UserInterest = require('../models/userInterest');
-const Interest = require('../models/interest');
-const Hashtag = require('../models/hashtag');
 const moment = require('moment');
+const { Op } = require('sequelize');
+const { Post, UserInterest, Interest, Hashtag, User} = require('../models');
 
-/**
- * Récupère un feed "général" pour l'utilisateur donné.
- * Ce feed est basé sur les posts récents, leur popularité, ainsi que leur adéquation avec les intérêts de l'utilisateur.
- * Le score de chaque post est calculé en fonction de la popularité (likes, reposts), de la récence et des intérêts de l'utilisateur.
- * 
- * @param {Object} user - L'utilisateur pour lequel on récupère le feed.
- * @param {number} [limit=200] - Le nombre maximal de posts à récupérer (par défaut 200).
- * @returns {Promise<Array>} - Une liste de posts triée par score décroissant.
- */
 async function getGeneralFeedForUser(user, limit = 200) {
     // 1) Récupérer les posts (les plus récents) avec leurs hashtags associés.
     const posts = await Post.findAll({
-        include: [{ model: Hashtag, as: 'Hashtags', through: { attributes: [] } }],
+        where: { parentPostId: null }, // Ne récupérer que les posts racines
+        include: [
+            {
+                model: User,
+                as: 'author',
+                attributes: ['id', 'username', 'avatar', 'address'],
+            },
+            {
+                model: Post,
+                as: 'responses',
+                include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar'] }],
+            },
+            {
+                model: Hashtag,
+                as: 'Hashtags',
+                attributes: ['name'],
+                through: { attributes: [] },
+            },
+        ],
         order: [['createdAt', 'DESC']],
         limit
     });
@@ -38,7 +43,7 @@ async function getGeneralFeedForUser(user, limit = 200) {
 
     // 3) Calculer un score pour chaque post
     const scoredPosts = posts.map((post) => {
-        const score = computePostScore(post, interestScoreMap, user);
+        const score = computePostScore(post, interestScoreMap);
         return { post, score };
     });
 
@@ -49,23 +54,14 @@ async function getGeneralFeedForUser(user, limit = 200) {
     return scoredPosts.map((item) => item.post);
 }
 
-/**
- * Calcule un score pour un post donné, en fonction de la popularité, de la récence,
- * et des intérêts de l'utilisateur.
- * 
- * @param {Object} post - Le post pour lequel calculer le score.
- * @param {Object} interestScoreMap - Un objet map représentant les scores d'intérêts de l'utilisateur.
- * @param {Object} user - L'utilisateur pour lequel le score est calculé.
- * @returns {number} - Le score calculé pour le post.
- */
-function computePostScore(post, interestScoreMap, user) {
+function computePostScore(post, interestScoreMap) {
     let score = 0;
 
-    // A) Popularité (ex: +1 par like, +2 par repost)
-    score += (post.likes || 0) * 1;
+    // A) Popularité
+    score += (post.likes   || 0) * 1;
     score += (post.reposts || 0) * 2;
 
-    // B) Récence : bonus en fonction de l'ancienneté du post
+    // B) Récence
     const now = moment();
     const postCreation = moment(post.createdAt);
     const hoursOld = now.diff(postCreation, 'hours');
@@ -80,9 +76,8 @@ function computePostScore(post, interestScoreMap, user) {
         }
     }
 
-    // D) Facteur aléatoire pour favoriser la découverte
-    const randomFactor = Math.random();
-    score += randomFactor * 1;
+    // D) Facteur aléatoire
+    score += Math.random();
 
     return score;
 }

@@ -1,8 +1,6 @@
 // controllers/notificationController.js
 
-const Notification = require('../models/notification');
-const User = require('../models/user');
-const Post = require('../models/post'); // <-- IMPORT MANQUANT AJOUTÉ
+const {Notification, User, Post} = require('../models');
 
 /**
  * Récupère toutes les notifications de l'utilisateur connecté.

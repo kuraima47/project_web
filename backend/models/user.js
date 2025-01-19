@@ -33,41 +33,6 @@ const User = sequelize.define('User', {
   },
 });
 
-// --- Relation Follows ---
-/**
- * "followers" : liste des utilisateurs QUI suivent CE user
- * => Sur la table UserFollows, CE user est `followingId`.
- */
-User.belongsToMany(User, {
-  as: 'followers',
-  through: UserFollows,
-  foreignKey: 'followingId',   // la colonne dans UserFollows
-  otherKey: 'followerId',      // l'autre colonne
-});
 
-/**
- * "following" : liste des utilisateurs que CE user SUIT
- * => Sur la table UserFollows, CE user est `followerId`.
- */
-User.belongsToMany(User, {
-  as: 'following',
-  through: UserFollows,
-  foreignKey: 'followerId',
-  otherKey: 'followingId',
-});
-
-
-User.belongsToMany(Interest, {
-  through: UserInterest,
-  foreignKey: 'userId',
-  otherKey: 'interestId',
-  as: 'interests',
-});
-
-Interest.belongsToMany(User, {
-  through: UserInterest,
-  foreignKey: 'interestId',
-  otherKey: 'userId'
-});
 
 module.exports = User;

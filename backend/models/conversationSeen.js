@@ -30,9 +30,6 @@ const ConversationSeen = sequelize.define('ConversationSeen', {
   timestamps: true,
 });
 
-ConversationSeen.belongsTo(Conversation, { foreignKey: 'conversationId' });
-ConversationSeen.belongsTo(User, { foreignKey: 'userId' });
-Conversation.hasMany(ConversationSeen, { foreignKey: 'conversationId' });
-User.hasMany(ConversationSeen, { foreignKey: 'userId' });
+
 
 module.exports = ConversationSeen;

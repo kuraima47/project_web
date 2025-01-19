@@ -1,8 +1,5 @@
 const { Op, Sequelize} = require('sequelize');
-const Message = require('../models/message');
-const User = require('../models/user');
-const Conversation = require('../models/conversation');
-const ConversationSeen = require('../models/conversationSeen');
+const  {Message, User, Conversation, ConversationSeen} = require('../models');
 
 const messageController = {
   // Envoi d'un message

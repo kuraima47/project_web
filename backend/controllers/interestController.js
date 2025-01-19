@@ -1,4 +1,4 @@
-const Interest = require('../models/interest');
+const {Interest} = require('../models');
 
 /**
  * Crée un nouvel intérêt ou retourne l'intérêt existant si l'élément est unique.

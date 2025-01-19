@@ -30,19 +30,6 @@ const Post = sequelize.define('Post', {
   },
 });
 
-// Relations
-Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
-User.hasMany(Post, { foreignKey: 'authorId' });
 
-Post.belongsToMany(Hashtag, { through: 'PostHashtags' });
-Hashtag.belongsToMany(Post, { through: 'PostHashtags' });
-
-Post.belongsToMany(User, { through: 'PostLikes', as: 'likedBy', foreignKey: 'postId', unique: true });
-User.belongsToMany(Post, { through: 'PostLikes', as: 'likedPosts', foreignKey: 'userId', unique: true });
-
-// Auto-references
-Post.belongsTo(Post, { as: 'originalPost', foreignKey: 'originalPostId' });
-Post.belongsTo(Post, { as: 'parentPost', foreignKey: 'parentPostId' });
-Post.hasMany(Post, { as: 'responses', foreignKey: 'parentPostId' });
 
 module.exports = Post;

@@ -1,11 +1,7 @@
 // controllers/postController.js
 
-const Post = require('../models/post');
-const User = require('../models/user');
-const Interest = require('../models/interest');
-const UserInterest = require('../models/userInterest');
-const Repost = require('../models/repost');
-const Hashtag = require('../models/hashtag');
+const {Post,User,Interest,UserInterest,Repost,Hashtag}  = require('../models');
+
 const { createNotification } = require('../services/notificationService');
 
 /**

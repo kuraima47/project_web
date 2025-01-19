@@ -1,10 +1,8 @@
 // controllers/searchController.js
 
 const { Op } = require('sequelize');
-const User = require('../models/user');
-const Post = require('../models/post');
-const Hashtag = require('../models/hashtag');
-const sequelize = require('../config/database');
+const {User,Post,Hashtag,sequelize} = require('../models');
+
 
 /**
  * Recherche dans les utilisateurs, posts et hashtags en fonction du terme de recherche et du type spécifié.
