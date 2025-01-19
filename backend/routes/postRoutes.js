@@ -15,5 +15,6 @@ router.post('/', authenticate, upload.single('media'), postController.createPost
 router.post('/:id/like', authenticate, postController.likePost);
 router.post('/:id/comment', authenticate, postController.commentPost);
 router.post('/:id/repost', authenticate, postController.repostPost);
+router.get('/media/:photoName', postController.viewImage);
 
 module.exports = router;

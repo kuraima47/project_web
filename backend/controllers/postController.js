@@ -77,6 +77,42 @@ exports.getAllFollowingPosts = async (req, res) => {
   }
 },
 
+/**
+ * Affiche le contenu d'un document Markdown associé à une release spécifique d'un projet.
+ *
+ * Cette fonction extrait le nom du document depuis les paramètres de la requête.
+ * Elle vérifie si l'utilisateur est connecté, puis récupère la release correspondante.
+ * Elle s'assure que le document demandé appartient bien à la release.
+ * Ensuite, elle construit le chemin du fichier en fonction de l'environnement (test ou production).
+ * Si le fichier existe, son contenu Markdown est converti en HTML et rendu dans la vue 'markdown'. Sinon, une erreur est renvoyée.
+ *
+ * @async
+ * @function viewDocument
+ * @param {Object} req - L'objet requête Express contenant  `photoName` dans les paramètres.
+ * @param {Object} res - L'objet réponse Express.
+ * @returns {Promise<void>} Aucune valeur retournée directement. La réponse est rendue via `res.render` ou `res.status`.
+ */
+exports.viewImage = async (req, res) => {
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const photoName = req.params.photoName;
+    const filePath = path.join(__dirname, '../uploads', photoName);
+
+    // Vérification si le fichier existe
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Fichier non trouvé' });
+    }
+
+    // Envoi du fichier
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Erreur lors de la visualisation du fichier:', error);
+    res.status(500).json({ error: 'Erreur lors de la visualisation du fichier' });
+  }
+};
+
+
 
 /**
  * Récupère tous les posts racines (sans parent) triés par date de création.
