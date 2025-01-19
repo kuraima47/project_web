@@ -7,8 +7,12 @@ const secretKey = process.env.JWT_SECRET || 'jwt_secret_key';
 const messageCooldowns = {};
 
 /**
- * Vérifie et décode le token JWT,
- * puis fixe `socket.userId` si tout est OK.
+ * Vérifie et décode le token JWT envoyé par l'utilisateur,
+ * puis définit `socket.userId` si le token est valide.
+ *
+ * @param {Socket} socket - L'objet socket associé à la connexion.
+ * @param {string} token - Le token JWT à vérifier.
+ * @returns {Object|null} - Les informations décodées du token si valide, sinon null.
  */
 function verifyToken(socket, token) {
   if (!token) {
@@ -30,8 +34,11 @@ function verifyToken(socket, token) {
 }
 
 /**
- * Vérifie si l'utilisateur (socket.userId) a accès
- * à la conversation `roomId`.
+ * Vérifie si l'utilisateur a accès à une conversation spécifique identifiée par `roomId`.
+ * 
+ * @param {Socket} socket - L'objet socket associé à la connexion.
+ * @param {number} roomId - L'ID de la conversation (room).
+ * @returns {boolean} - Retourne true si l'utilisateur a accès, sinon false.
  */
 async function checkConversationAccess(socket, roomId) {
   // Par exemple, roomId == -1 peut être un chat global (optionnel)
@@ -61,7 +68,12 @@ async function checkConversationAccess(socket, roomId) {
 }
 
 /**
- * Gère la vérification du cooldown et de la taille du message.
+ * Gère la vérification du cooldown et de la taille du message avant son envoi.
+ * 
+ * @param {Socket} socket - L'objet socket associé à la connexion.
+ * @param {Object} message - L'objet message envoyé par l'utilisateur.
+ * @param {string} message.content - Le contenu du message.
+ * @returns {boolean} - Retourne true si le message est valide et peut être envoyé, sinon false.
  */
 function handleMessageCooldown(socket, message) {
   const currentTime = Date.now();
@@ -90,6 +102,11 @@ function handleMessageCooldown(socket, message) {
   return true;
 }
 
+/**
+ * Gère les connexions, les événements de messages et la gestion des conversations.
+ * 
+ * @param {Server} io - L'instance du serveur Socket.io.
+ */
 module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log('Un utilisateur est connecté :', socket.id);
@@ -100,8 +117,6 @@ module.exports = (io) => {
     if (!decoded) return; // Si token invalide, on a déjà déconnecté.
 
     // 2. Écouter l'événement "listenMyRooms"
-    //    (Par exemple, dans ton front, tu fais socket.emit("listenMyRooms")
-    //     après s'être connecté)
     socket.on('listenMyRooms', async () => {
       try {
         // Récupérer toutes les conversations de l'utilisateur
@@ -132,7 +147,6 @@ module.exports = (io) => {
     });
 
     // 3. Rejoindre une room précise (conversation)
-    //    (Dans ta page /messages/[id], tu fais socket.emit("joinRoom", conversationId))
     socket.on('joinRoom', async (roomId) => {
       const hasAccess = await checkConversationAccess(socket, roomId);
       io.to(roomId).emit("refresh");
@@ -140,16 +154,9 @@ module.exports = (io) => {
     });
 
     // 4. Écouter l'événement "sendMessage"
-    //    => le front envoie { roomId, message }
-    //    => on vérifie accès / cooldown / etc.
-    //    => on émet 'receiveMessage' dans la room
     socket.on('sendMessage', (messageData) => {
       const { roomId, message } = messageData;
 
-      // Si tu veux appliquer le cooldown seulement sur une room globale :
-      // if (roomId < 0 && !handleMessageCooldown(socket, message)) return;
-
-      // Si tu veux l'appliquer sur toutes les conversations, supprime la condition :
       if(roomId == -1)
         if (!handleMessageCooldown(socket, message)) return;
 
@@ -159,14 +166,6 @@ module.exports = (io) => {
       io.to(roomId).emit('receiveMessage', message);
     });
 
-    /**
-     * 5. Création d'une conversation (OPTIONNEL)
-     *    -> soit tu la crées côté front en faisant un fetch vers ton API REST
-     *    -> soit tu peux aussi créer côté socket si tu veux
-     *
-     *    Imaginons que le front émet "newConversation" avec
-     *    { participants: [...], etc. } quand tu cliques sur "Démarrer"
-     */
     socket.on('newConversation', async (conversationData) => {
       try {
         io.emit('receiveNewConversation', conversationData);
@@ -178,7 +177,6 @@ module.exports = (io) => {
       }
     });
 
-    // 6. Déconnexion
     socket.on('disconnect', () => {
       console.log('Un utilisateur s\'est déconnecté :', socket.id);
     });

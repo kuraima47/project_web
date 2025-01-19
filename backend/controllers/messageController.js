@@ -7,6 +7,12 @@ const ConversationSeen = require('../models/conversationSeen');
 const messageController = {
   // Envoi d'un message
 
+    /**
+   * Marque une conversation comme vue pour l'utilisateur actuel.
+   * @param {Object} req - La requête HTTP.
+   * @param {Object} res - La réponse HTTP.
+   * @returns {Object} La réponse HTTP avec un statut de succès ou d'erreur.
+   */
   markAsSeen: async (req, res) => {
     const userId = req.user.id; // Assurez-vous que l'ID utilisateur est bien accessible ici
     const { conversationId } = req.params; // Récupère l'ID de la conversation dans les paramètres
@@ -51,6 +57,12 @@ const messageController = {
   },
   
 
+    /**
+   * Envoie un message entre deux utilisateurs.
+   * @param {Object} req - La requête HTTP.
+   * @param {Object} res - La réponse HTTP.
+   * @returns {Object} La réponse HTTP avec le message envoyé ou une erreur.
+   */
   sendMessage: async (req, res) => {
     let receiverId;
     const senderId = req.user.id;
@@ -144,6 +156,13 @@ const messageController = {
     }
   },
 
+
+    /**
+   * Récupère les messages d'une conversation spécifique.
+   * @param {Object} req - La requête HTTP.
+   * @param {Object} res - La réponse HTTP.
+   * @returns {Object} La réponse HTTP avec les messages de la conversation.
+   */
   // Récupérer les messages d'une conversation
   getConversation: async (req, res) => {
     const conversationId = req.params.conversationId;
@@ -193,7 +212,12 @@ const messageController = {
     }
   },
 
-  // Récupérer toutes les conversations pour un utilisateur
+    /**
+   * Récupère toutes les conversations pour un utilisateur.
+   * @param {Object} req - La requête HTTP.
+   * @param {Object} res - La réponse HTTP.
+   * @returns {Object} La réponse HTTP avec toutes les conversations.
+   */
   getConversations: async (req, res) => {
     const userId = req.user.id;
 
@@ -255,6 +279,13 @@ const messageController = {
       return res.status(500).json({ message: 'Erreur lors de la récupération des conversations' });
     }
   },
+
+    /**
+   * Vérifie si le dernier message d'une conversation a été vu par l'autre utilisateur.
+   * @param {Object} req - La requête HTTP.
+   * @param {Object} res - La réponse HTTP.
+   * @returns {Object} La réponse HTTP avec le statut de "vu" du dernier message.
+   */
   isLastMessageSeen: async (req, res) => {
     const { conversationId } = req.params;
   
