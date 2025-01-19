@@ -1,8 +1,8 @@
 // services/feedService.js
 const { Op } = require('sequelize');
 const Post = require('../models/post');
-const UserInterest = require('../models/userInterest');
-const Interest = require('../models/interest');
+const UserInterest = require('../models/UserInterest');
+const Interest = require('../models/Interest');
 const Hashtag = require('../models/hashtag');
 const moment = require('moment'); // pour manipuler plus facilement les dates (optionnel)
 

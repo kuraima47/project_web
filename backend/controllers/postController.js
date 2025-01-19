@@ -2,8 +2,8 @@
 
 const Post = require('../models/post');
 const User = require('../models/user');
-const Interest = require('../models/interest');
-const UserInterest = require('../models/userInterest');
+const Interest = require('../models/Interest');
+const UserInterest = require('../models/UserInterest');
 const Repost = require('../models/repost');
 const Hashtag = require('../models/hashtag');
 const { createNotification } = require('../services/notificationService');
