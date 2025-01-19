@@ -6,7 +6,7 @@ const Post = require('./post');
 
 const Notification = sequelize.define('Notification', {
     type: {
-        type: DataTypes.ENUM('like', 'comment', 'repost', 'follow'), // <-- Ajout "follow"
+        type: DataTypes.ENUM('like', 'comment', 'repost', 'follow', 'unfollow'), // <-- Ajout "follow"
         allowNull: false,
     },
     read: {
