@@ -21,7 +21,7 @@ exports.getNotifications = async (req, res) => {
         const notifications = await Notification.findAll({
             where: { userId: req.user.id },
             include: [
-                { model: User, as: 'actor', attributes: ['username', 'avatar'] },
+                { model: User, as: 'actor', attributes: ['username', 'avatar', 'address'] },
                 { model: Post, as: 'post', attributes: ['id', 'content'] },
             ],
             order: [['createdAt', 'DESC']],

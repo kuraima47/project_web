@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Bell, Heart, MessageCircle, Repeat2, UserPlus, UserMinus } from 'lucide-react'
 import { getApiUrl } from "@/utils/address";
+import Link from 'next/link'
 
 interface Notification {
     id: string
@@ -12,6 +13,7 @@ interface Notification {
     actor: {
         username: string
         avatar: string
+        address: string
     }
     post: {
         id: string
@@ -110,10 +112,12 @@ export default function Notifications() {
                         className={`cursor-pointer transition-colors ${notification.read ? 'bg-background' : 'bg-accent'}`}
                     >
                         <CardContent className="flex items-center space-x-4 p-4">
-                            <Avatar>
-                                <AvatarImage src={notification.actor.avatar} alt={notification.actor.username} />
-                                <AvatarFallback>{notification.actor.username[0].toUpperCase()}</AvatarFallback>
-                            </Avatar>
+                            <Link href={`/users/${notification.actor.address}`}>
+                                <Avatar className="hover:cursor-pointer hover:bg-blue-100 hover:ring-2 hover:ring-blue-300 transition-all duration-500">
+                                    <AvatarImage src={notification.actor.avatar} alt={notification.actor.username} />
+                                    <AvatarFallback>{notification.actor.username[0].toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                            </Link>
                             <div className="flex-1">
                                 <p>
                                     <span className="font-semibold">{notification.actor.username}</span>{' '}
