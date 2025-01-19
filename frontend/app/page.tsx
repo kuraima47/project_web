@@ -42,7 +42,8 @@ export default function Home() {
     }
 
     const handleRouteChange = async (route) => {
-        setRoute(route)
+        console.log("Change Routes : ", route);
+        setRoute(route);
     }
 
     if (isLoading || !user) {
