@@ -12,4 +12,6 @@ router.get('/:cryptoName', getCryptoPricesWithName);
 
 router.get('/:id/sparkline', cryptoController.getCryptoSparkline);
 
+router.get('/:id', cryptoController.getCryptoDetail);
+
 module.exports = router;
