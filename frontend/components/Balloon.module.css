@@ -1,0 +1,56 @@
+/* components/Balloons.module.css */
+
+.balloonsContainer {
+    position: fixed;
+    bottom: -150px; /* Commencer en dessous de l'écran */
+    width: 100%;
+    height: 0;
+    pointer-events: none; /* Permettre aux interactions de passer à travers */
+    overflow: visible;
+    z-index: 1000; /* Assurer que les ballons sont au-dessus de tout */
+}
+
+.balloon {
+    position: absolute;
+    bottom: 0;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    animation-name: float;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.string {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 2px;
+    height: 30px;
+    background-color: #555;
+    transform: translateX(-50%);
+}
+
+/* Animation des ballons flottants */
+@keyframes float {
+    0% {
+        transform: translateX(-50%) translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    25% {
+        transform: translateX(-50%) translateY(-100px) rotate(5deg);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateX(-50%) translateY(-200px) rotate(-5deg);
+        opacity: 0.6;
+    }
+    75% {
+        transform: translateX(-50%) translateY(-250px) rotate(3deg);
+        opacity: 0.4;
+    }
+    100% {
+        transform: translateX(-50%) translateY(-300px) rotate(0deg);
+        opacity: 0;
+    }
+}

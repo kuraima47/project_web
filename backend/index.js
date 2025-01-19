@@ -19,6 +19,7 @@ const messageRoutes = require('./routes/messageRoutes'); // Routes pour les mess
 const cryptoRoutes = require('./routes/cryptoRoutes'); // Routes pour les cryptomonnaies
 const pixelWarRoutes = require('./routes/pixelWarRoutes'); // Routes pour le jeu PixelWar
 const feedRoutes = require('./routes/feedRoutes'); // Routes pour le fil d'actualité
+const eastereggRoutes = require('./routes/easterEggRoutes'); // Routes pour l'easter egg
 
 // Import des modèles
 const User = require('./models/user'); // Modèle utilisateur
@@ -72,6 +73,7 @@ app.use('/api/search', searchRoutes); // Routes pour la recherche
 app.use('/api/messages', messageRoutes); // Routes pour les messages privés
 app.use('/api/pixels', pixelWarRoutes); // Routes pour le jeu PixelWar
 app.use('/api/feed', feedRoutes); // Routes pour le fil d'actualité
+app.use('/api/easterEgg', eastereggRoutes); // Routes pour l'easter egg
 
 /**
  * Synchronisation des modèles Sequelize et démarrage des serveurs.

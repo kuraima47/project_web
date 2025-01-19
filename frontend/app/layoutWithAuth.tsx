@@ -6,9 +6,13 @@ import { SidebarNav } from '@/components/sidebar-nav'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { ToastNotification } from "@/components/ToastNotification"
 import { NotificationProvider } from '@/contexts/notification-context'
+import {useContext, useState} from "react";
+import {QuestContext} from "@/contexts/QuestContext";
 
 export function LayoutWithAuth({ children }: { children: React.ReactNode }) {
     const { user, isLoading } =  useAuth();
+
+
   
     // On s'assure que l'utilisateur est authentifié avant d'afficher le ToastNotification
     return (
