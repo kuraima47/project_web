@@ -3,7 +3,6 @@ const { Sequelize } = require('sequelize');
 const path = require('path');
 require('dotenv').config();
 
-
 const schema = 'public';
 const isProduction = process.env.NODE_ENV === 'production';
 

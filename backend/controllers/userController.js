@@ -2,6 +2,7 @@
 
 const { ethers } = require('ethers');
 const { User,Notification,Interest,UserInterest,UserFollows} = require('../models');
+const { v4: uuidv4 } = require('uuid');
 
 const jwt = require('jsonwebtoken');
 const { createNotification } = require('../services/notificationService');
@@ -29,10 +30,13 @@ exports.login = async (req, res) => {
     if (!user) {
       // Si l'utilisateur n'existe pas, créer un nouvel utilisateur
       const hashedPassword = await bcrypt.hash(password, 10);
+      const generatedUsername = uuidv4(); 
       user = await User.create({
         email: email.toLowerCase(),
         password: hashedPassword,
         address,
+        username: "defaultGenerated"+generatedUsername,
+        avatar: "https://i.etsystatic.com/12779859/r/il/6aa02a/2838245678/il_570xN.2838245678_rdde.jpg"
       });
     } else {
       // Si l'utilisateur existe, vérifier le mot de passe
@@ -84,7 +88,13 @@ exports.authenticate = async (req, res) => {
 
     // Si pas trouvé, on le crée
     if (!user) {
-      user = await User.create({ address: address.toLowerCase() });
+
+      const generatedUsername = uuidv4(); 
+      user = await User.create({ 
+        address: address.toLowerCase(),
+        username: "defaultGenerated"+generatedUsername,
+        avatar: "https://i.etsystatic.com/12779859/r/il/6aa02a/2838245678/il_570xN.2838245678_rdde.jpg"
+      });
     }
 
     // Générer un token JWT

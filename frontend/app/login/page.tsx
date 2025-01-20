@@ -14,7 +14,7 @@ export default function Login() {
 
   useEffect(() => {
     if (user) {
-      if (user.username) {
+      if (user.username && user.username.substring(0,16) != 'defaultGenerated' ) {
         router.push('/')
       } else {
         router.push('/register')
